@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "846372952109",
+    "project_id": "aiwordwars",
+    "storage_bucket": "aiwordwars.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:846372952109:android:e9f3eff305f957f55400a4",
+        "android_client_info": {
+          "package_name": "com.Adarsh.AIWordWars"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "846372952109-5b8eabfpao0c46plpgq59r6q6i7h002l.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDjCejf0hBBO9Ylxepz_K9IYD8vZJrA_gU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "846372952109-5b8eabfpao0c46plpgq59r6q6i7h002l.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
