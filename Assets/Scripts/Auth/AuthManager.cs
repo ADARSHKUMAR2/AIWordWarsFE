@@ -122,4 +122,7 @@ public class AuthManager : MonoBehaviour
             Debug.Log("✅ Signed out");
         }
     }
+
+    // Sign in with Google
+    
 }

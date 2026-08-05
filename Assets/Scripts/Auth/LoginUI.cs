@@ -12,6 +12,8 @@ public class LoginUI : MonoBehaviour
     public Button registerButton;
     public TextMeshProUGUI statusText;
 
+    public Button googleLoginButton;
+
     private void Start()
     {
         loginButton.onClick.AddListener(OnLoginClicked);
@@ -87,4 +89,5 @@ public class LoginUI : MonoBehaviour
     {
         SceneManager.LoadScene("MainMenuScene");
     }
+
 }
