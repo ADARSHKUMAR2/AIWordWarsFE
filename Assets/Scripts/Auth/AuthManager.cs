@@ -3,6 +3,7 @@ using System.Collections;
 using Firebase;
 using Firebase.Auth;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class AuthManager : MonoBehaviour
 {
@@ -13,6 +14,8 @@ public class AuthManager : MonoBehaviour
 
     public bool IsLoggedIn => currentUser != null;
     public string CurrentUserUID => currentUser?.UserId;
+
+    public string CurrentSessionId { get; private set; }
 
     private void Awake()
     {
@@ -30,6 +33,7 @@ public class AuthManager : MonoBehaviour
     private void Start()
     {
         InitializeFirebase();
+        CheckExistingSession();
     }
 
     private void InitializeFirebase()
@@ -48,6 +52,27 @@ public class AuthManager : MonoBehaviour
         });
     }
 
+    private void CheckExistingSession()
+    {
+        string savedSession = PlayerPrefs.GetString("session_id", "");
+        if (!string.IsNullOrEmpty(savedSession))
+        {
+            Debug.Log("🔍 Found saved session, validating...");
+            CurrentSessionId = savedSession;
+            
+            // Call ApiService to validate session
+            StartCoroutine(ApiService.Instance.ValidateSession(savedSession, (isValid) => {
+                if(isValid) {
+                    Debug.Log("✅ Session Valid! Proceed to Game.");
+                    SceneManager.LoadScene("MainMenuScene");
+                } else {
+                    Debug.Log("❌ Session Invalid. Clearing.");
+                    SignOut(); // Clear the bad session locally
+                }
+            }));
+        }
+    }
+    
     // Sign in with email and password
     public void SignInWithEmail(string email, string password, Action<ApiService.UserProfile> onSuccess, Action<string> onError)
     {
@@ -83,8 +108,18 @@ public class AuthManager : MonoBehaviour
         string idToken = tokenTask.Result;
         Debug.Log("✅ Got Firebase ID token");
 
+        Action<ApiService.UserProfile> wrappedSuccess = (profile) => 
+        {
+            CurrentSessionId = profile.session_id;
+            PlayerPrefs.SetString("session_id", profile.session_id);
+            PlayerPrefs.Save();
+            Debug.Log($"✅ Session saved locally: {CurrentSessionId}");
+            
+            onSuccess?.Invoke(profile);
+        };
+
         // Send token to backend
-        yield return ApiService.Instance.LoginWithFirebase(idToken, onSuccess, onError);
+        yield return ApiService.Instance.LoginWithFirebase(idToken, wrappedSuccess, onError);
     }
 
     // Register with email and password
@@ -115,12 +150,26 @@ public class AuthManager : MonoBehaviour
     // Sign out
     public void SignOut()
     {
+        // 1. Sign out of Firebase
         if (auth != null && currentUser != null)
         {
             auth.SignOut();
             currentUser = null;
-            Debug.Log("✅ Signed out");
         }
+
+        // 2. Call backend to invalidate session (Fire and forget, or yield it)
+        if (!string.IsNullOrEmpty(CurrentSessionId))
+        {
+            // Call backend to invalidate session
+            StartCoroutine(ApiService.Instance.Logout(CurrentSessionId));
+        }
+
+        // 3. Clear local session data
+        CurrentSessionId = null;
+        PlayerPrefs.DeleteKey("session_id");
+        PlayerPrefs.Save();
+        
+        Debug.Log("✅ Signed out completely and cleared local session.");
     }
 
     // Sign in with Google

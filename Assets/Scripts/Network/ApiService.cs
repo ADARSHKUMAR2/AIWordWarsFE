@@ -55,9 +55,82 @@ public class ApiService : MonoBehaviour
         }
     }
 
+    public IEnumerator ValidateSession(string sessionId, Action<bool> onComplete)
+    {
+        string url = $"{GATEWAY_URL}/auth/api/session/validate";
+        string jsonBody = $"{{\"session_id\": \"{sessionId}\"}}";
+
+        using (UnityWebRequest request = CreatePostRequest(url, jsonBody))
+        {
+            yield return request.SendWebRequest();
+
+            if (request.result == UnityWebRequest.Result.Success)
+            {
+                Debug.Log("Session is valid: " + request.downloadHandler.text);
+                onComplete?.Invoke(true);
+            }
+            else
+            {
+                Debug.LogWarning("Session is invalid or expired: " + request.error);
+                onComplete?.Invoke(false);
+            }
+        }
+    }
+
+    // POST /auth/api/logout
+    public IEnumerator Logout(string sessionId)
+    {
+        string url = $"{GATEWAY_URL}/auth/api/logout";
+        string jsonBody = $"{{\"session_id\": \"{sessionId}\"}}";
+
+        using (UnityWebRequest request = CreatePostRequest(url, jsonBody))
+        {
+            yield return request.SendWebRequest();
+
+            if (request.result == UnityWebRequest.Result.Success)
+            {
+                Debug.Log("Backend logout successful.");
+            }
+            else
+            {
+                Debug.LogWarning("Backend logout failed, but clearing locally anyway: " + request.error);
+            }
+        }
+    }
+
+    // ---------------------------------------------
+    // HELPER METHODS
+    // ---------------------------------------------
+
+    private UnityWebRequest CreatePostRequest(string url, string jsonBody)
+    {
+        UnityWebRequest request = new UnityWebRequest(url, "POST");
+        byte[] bodyRaw = Encoding.UTF8.GetBytes(jsonBody);
+        request.uploadHandler = new UploadHandlerRaw(bodyRaw);
+        request.downloadHandler = new DownloadHandlerBuffer();
+        request.SetRequestHeader("Content-Type", "application/json");
+        
+        // If we have an active session, append it to headers for protected routes!
+        if (AuthManager.Instance != null && !string.IsNullOrEmpty(AuthManager.Instance.CurrentSessionId))
+        {
+            request.SetRequestHeader("Authorization", $"Bearer {AuthManager.Instance.CurrentSessionId}");
+        }
+
+        return request;
+    }
+
+    private void HandleError(string context, UnityWebRequest request, Action<string> onError)
+    {
+        Debug.LogError($"{context}: {request.error}");
+        Debug.LogError($"Response body: {request.downloadHandler.text}");
+        onError?.Invoke(request.error);
+    }
+
+
     [Serializable]
     public class UserProfile
     {
+        public string session_id;
         public string firebase_uid;
         public string display_name;
         public string email;
