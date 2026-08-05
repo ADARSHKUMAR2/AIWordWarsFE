@@ -22,6 +22,8 @@ public class AuthManager : MonoBehaviour
     public int CurrentCoins { get; private set; }
     public int CurrentLevel { get; private set; }
     public int CurrentXPToNext { get; private set; }
+    public string CurrentDisplayName { get; private set; }  
+    public string CurrentPhotoUrl { get; private set; }
 
     private void Awake()
     {
@@ -79,6 +81,8 @@ public class AuthManager : MonoBehaviour
                             CurrentCoins = profile.coins;
                             CurrentLevel = profile.level;
                             CurrentXPToNext = profile.xp_to_next_level;
+                            CurrentDisplayName = profile.display_name;  
+                            CurrentPhotoUrl = profile.photo_url;    
                             Debug.Log($"✅ Progression restored: Lv.{CurrentLevel}, XP={CurrentXP}, Coins={CurrentCoins}");
                             SceneManager.LoadScene("MainMenuScene"); // ← only here
                         }, (err) => {
@@ -143,8 +147,9 @@ public class AuthManager : MonoBehaviour
             CurrentXP = profile.xp;
             CurrentCoins = profile.coins;
             CurrentLevel = profile.level;
-            // xp_to_next_level is not in UserProfile yet — set a placeholder
             CurrentXPToNext = profile.xp_to_next_level;
+            CurrentDisplayName = profile.display_name; 
+            CurrentPhotoUrl = profile.photo_url;    
 
             PlayerPrefs.SetString("session_id", profile.session_id);
             PlayerPrefs.SetString("firebase_uid", profile.firebase_uid);  // ← save UID

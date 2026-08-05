@@ -213,7 +213,15 @@ public class GameManager : MonoBehaviour
 
         if (currentMode == GameMode.Classic)
         {
-            var req = new SolveRequest { puzzle_id = currentPuzzleId, answer = answer, time_taken = timeTaken, user_id = userId };
+            var req = new SolveRequest { 
+                puzzle_id = currentPuzzleId, 
+                answer = answer, 
+                time_taken = timeTaken, 
+                user_id = userId,
+                display_name = AuthManager.Instance?.CurrentDisplayName,
+                photo_url = AuthManager.Instance?.CurrentPhotoUrl
+            };
+
             StartCoroutine(GameApiService.Instance.SolvePuzzle(req, res => {
                 if (res.correct) totalScore += res.score;
 
@@ -229,6 +237,18 @@ public class GameManager : MonoBehaviour
                 UpdateScoreUI();
                 if (res.progression != null)
                     ShowProgressionFeedback(res.progression);
+
+                // Show player's leaderboard rank in feedback
+                if (res.correct && !string.IsNullOrEmpty(userId) && userId != "guest")
+                {
+                    StartCoroutine(LeaderboardApiService.Instance.GetPlayerRank("global", userId, "simple",
+                        (rankData) => {
+                            if (rankData != null)
+                                feedbackText.text += $"\n<color=cyan>🏆 Global Rank: #{rankData.rank}</color>";
+                        },
+                        (err) => Debug.LogWarning("Could not fetch rank: " + err)
+                    ));
+                }
 
                 if (classicNextButton != null) classicNextButton.interactable = true;
                 isWaitingForNetwork = false;

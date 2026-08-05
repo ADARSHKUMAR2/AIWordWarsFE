@@ -11,6 +11,13 @@ public class MainMenuController : MonoBehaviour
     
     [Header("Other UI")]
     public Button logoutButton;
+    public Button leaderboardButton; 
+
+    [Header("Panels")]
+    public GameObject mainMenuPanel;    
+    public GameObject leaderboardPanel;
+    [Header("Leaderboard")]
+    public LeaderboardManager leaderboardManager;
 
     private void Start()
     {
@@ -22,6 +29,13 @@ public class MainMenuController : MonoBehaviour
         {
             logoutButton.onClick.AddListener(OnLogoutClicked);
         }
+        
+        if (leaderboardButton != null)
+            leaderboardButton.onClick.AddListener(OpenLeaderboard);
+
+
+        if (leaderboardPanel != null)
+            leaderboardPanel.SetActive(false);
     }
 
     private void StartGameMode(string modeName)
@@ -36,6 +50,24 @@ public class MainMenuController : MonoBehaviour
         SceneManager.LoadScene("GameplayScene"); 
     }
 
+    private void OpenLeaderboard()
+    {
+        // Hide main menu, show leaderboard panel
+        if (mainMenuPanel != null) mainMenuPanel.SetActive(false);
+        if (leaderboardPanel != null) leaderboardPanel.SetActive(true);
+
+        // Trigger a fresh data load every time it's opened
+        if (leaderboardManager != null)
+            leaderboardManager.LoadLeaderboard();
+    }
+
+    public void CloseLeaderboard()
+    {
+        // Show main menu, hide leaderboard panel
+        if (leaderboardPanel != null) leaderboardPanel.SetActive(false);
+        if (mainMenuPanel != null) mainMenuPanel.SetActive(true);
+    }
+
     private void OnLogoutClicked()
     {
         if (AuthManager.Instance != null)
@@ -44,6 +76,6 @@ public class MainMenuController : MonoBehaviour
         }
         
         // Send them back to the Login screen
-        SceneManager.LoadScene("LoginScene"); // Make sure this matches your login scene name!
+        SceneManager.LoadScene("LoginScene"); 
     }
 }

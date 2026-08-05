@@ -31,6 +31,8 @@ public class SolveRequest
     public string answer;
     public float time_taken;
     public string user_id;
+    public string display_name;   // ← ADD: for leaderboard display name
+    public string photo_url;  
 }
 
 [Serializable]
