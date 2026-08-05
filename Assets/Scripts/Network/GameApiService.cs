@@ -23,115 +23,157 @@ public class GameApiService : MonoBehaviour
         }
     }
 
-    // POST /game/api/puzzle/new
+    // ─────────────────────────────────────────
+    // HELPER — builds an authenticated POST request
+    // ─────────────────────────────────────────
+    private UnityWebRequest BuildPostRequest(string url, string jsonBody)
+    {
+        UnityWebRequest request = new UnityWebRequest(url, "POST");
+        byte[] bodyRaw = Encoding.UTF8.GetBytes(jsonBody);
+        request.uploadHandler = new UploadHandlerRaw(bodyRaw);
+        request.downloadHandler = new DownloadHandlerBuffer();
+        request.SetRequestHeader("Content-Type", "application/json");
+
+        if (AuthManager.Instance != null && !string.IsNullOrEmpty(AuthManager.Instance.CurrentSessionId))
+        {
+            request.SetRequestHeader("Authorization", $"Bearer {AuthManager.Instance.CurrentSessionId}");
+        }
+        return request;
+    }
+
+    // ─────────────────────────────────────────
+    // CLASSIC MODE
+    // ─────────────────────────────────────────
+
     public IEnumerator GetNewPuzzle(NewPuzzleRequest puzzleRequest, Action<PuzzleResponse> onSuccess, Action<string> onError)
     {
         string url = $"{GATEWAY_URL}/game/api/puzzle/new";
         string jsonBody = JsonUtility.ToJson(puzzleRequest);
 
-        using (UnityWebRequest request = new UnityWebRequest(url, "POST"))
+        using (UnityWebRequest request = BuildPostRequest(url, jsonBody))
         {
-            byte[] bodyRaw = Encoding.UTF8.GetBytes(jsonBody);
-            request.uploadHandler = new UploadHandlerRaw(bodyRaw);
-            request.downloadHandler = new DownloadHandlerBuffer();
-            request.SetRequestHeader("Content-Type", "application/json");
-
-            // THE AUTHORIZATION HEADER
-            if (AuthManager.Instance != null && !string.IsNullOrEmpty(AuthManager.Instance.CurrentSessionId))
-            {
-                request.SetRequestHeader("Authorization", $"Bearer {AuthManager.Instance.CurrentSessionId}");
-            }
-    
             yield return request.SendWebRequest();
 
             if (request.result == UnityWebRequest.Result.Success)
             {
                 Debug.Log("Fetched new puzzle: " + request.downloadHandler.text);
-                PuzzleResponse response = JsonUtility.FromJson<PuzzleResponse>(request.downloadHandler.text);
-                onSuccess?.Invoke(response);
+                onSuccess?.Invoke(JsonUtility.FromJson<PuzzleResponse>(request.downloadHandler.text));
             }
             else
             {
                 Debug.LogError("Failed to fetch puzzle: " + request.error);
-                Debug.LogError("Response body: " + request.downloadHandler.text);
                 onError?.Invoke(request.error);
             }
         }
     }
 
-    // POST /game/api/puzzle/solve
     public IEnumerator SolvePuzzle(SolveRequest solveRequest, Action<SolveResponse> onSuccess, Action<string> onError)
     {
         string url = $"{GATEWAY_URL}/game/api/puzzle/solve";
         string jsonBody = JsonUtility.ToJson(solveRequest);
 
-        using (UnityWebRequest request = new UnityWebRequest(url, "POST"))
+        using (UnityWebRequest request = BuildPostRequest(url, jsonBody))
         {
-            byte[] bodyRaw = Encoding.UTF8.GetBytes(jsonBody);
-            request.uploadHandler = new UploadHandlerRaw(bodyRaw);
-            request.downloadHandler = new DownloadHandlerBuffer();
-            request.SetRequestHeader("Content-Type", "application/json");
-
-            // THE AUTHORIZATION HEADER
-            if (AuthManager.Instance != null && !string.IsNullOrEmpty(AuthManager.Instance.CurrentSessionId))
-            {
-                request.SetRequestHeader("Authorization", $"Bearer {AuthManager.Instance.CurrentSessionId}");
-            }
-
             yield return request.SendWebRequest();
 
             if (request.result == UnityWebRequest.Result.Success)
             {
                 Debug.Log("Solved puzzle: " + request.downloadHandler.text);
-                SolveResponse response = JsonUtility.FromJson<SolveResponse>(request.downloadHandler.text);
-                onSuccess?.Invoke(response);
+                onSuccess?.Invoke(JsonUtility.FromJson<SolveResponse>(request.downloadHandler.text));
             }
             else
             {
                 Debug.LogError("Failed to solve puzzle: " + request.error);
-                Debug.LogError("Response body: " + request.downloadHandler.text);
                 onError?.Invoke(request.error);
             }
         }
     }
 
-    // --- DATA MODELS ---
+    // ─────────────────────────────────────────
+    // TIME ATTACK MODE
+    // ─────────────────────────────────────────
 
-    [Serializable]
-    public class NewPuzzleRequest
+    public IEnumerator GetNewTimeAttackPuzzle(NewPuzzleRequest puzzleRequest, Action<TimeAttackPuzzleResponse> onSuccess, Action<string> onError)
     {
-        public int difficulty;
-        public string mode;
-        public string category;
+        string url = $"{GATEWAY_URL}/game/api/time-attack/puzzle/new";
+        string jsonBody = JsonUtility.ToJson(puzzleRequest);
+
+        using (UnityWebRequest request = BuildPostRequest(url, jsonBody))
+        {
+            yield return request.SendWebRequest();
+
+            if (request.result == UnityWebRequest.Result.Success)
+            {
+                onSuccess?.Invoke(JsonUtility.FromJson<TimeAttackPuzzleResponse>(request.downloadHandler.text));
+            }
+            else
+            {
+                onError?.Invoke(request.error);
+            }
+        }
     }
 
-    [Serializable]
-    public class PuzzleResponse
+    public IEnumerator SolveTimeAttackPuzzle(TimeAttackSolveRequest solveRequest, Action<TimeAttackSolveResponse> onSuccess, Action<string> onError)
     {
-        public string puzzle_id;
-        public string scrambled;
-        public int difficulty;
-        public string hint;
-        public string mode;
-        public string category;
+        string url = $"{GATEWAY_URL}/game/api/time-attack/puzzle/solve";
+        string jsonBody = JsonUtility.ToJson(solveRequest);
+
+        using (UnityWebRequest request = BuildPostRequest(url, jsonBody))
+        {
+            yield return request.SendWebRequest();
+
+            if (request.result == UnityWebRequest.Result.Success)
+            {
+                onSuccess?.Invoke(JsonUtility.FromJson<TimeAttackSolveResponse>(request.downloadHandler.text));
+            }
+            else
+            {
+                onError?.Invoke(request.error);
+            }
+        }
     }
 
-    [Serializable]
-    public class SolveRequest
+    // ─────────────────────────────────────────
+    // SURVIVAL MODE
+    // ─────────────────────────────────────────
+
+    public IEnumerator GetNewSurvivalPuzzle(NewPuzzleRequest puzzleRequest, Action<SurvivalPuzzleResponse> onSuccess, Action<string> onError)
     {
-        public string puzzle_id;
-        public string answer;
-        public float time_taken;
-        public string user_id;
+        string url = $"{GATEWAY_URL}/game/api/survival/puzzle/new";
+        string jsonBody = JsonUtility.ToJson(puzzleRequest);
+
+        using (UnityWebRequest request = BuildPostRequest(url, jsonBody))
+        {
+            yield return request.SendWebRequest();
+
+            if (request.result == UnityWebRequest.Result.Success)
+            {
+                onSuccess?.Invoke(JsonUtility.FromJson<SurvivalPuzzleResponse>(request.downloadHandler.text));
+            }
+            else
+            {
+                onError?.Invoke(request.error);
+            }
+        }
     }
 
-    [Serializable]
-    public class SolveResponse
+    public IEnumerator SolveSurvivalPuzzle(SurvivalSolveRequest solveRequest, Action<SurvivalSolveResponse> onSuccess, Action<string> onError)
     {
-        public bool correct;
-        public float time_taken;
-        public int score;
-        public string feedback;
-        public string correct_answer;
+        string url = $"{GATEWAY_URL}/game/api/survival/puzzle/solve";
+        string jsonBody = JsonUtility.ToJson(solveRequest);
+
+        using (UnityWebRequest request = BuildPostRequest(url, jsonBody))
+        {
+            yield return request.SendWebRequest();
+
+            if (request.result == UnityWebRequest.Result.Success)
+            {
+                onSuccess?.Invoke(JsonUtility.FromJson<SurvivalSolveResponse>(request.downloadHandler.text));
+            }
+            else
+            {
+                onError?.Invoke(request.error);
+            }
+        }
     }
 }
