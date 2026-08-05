@@ -63,7 +63,7 @@ public class LoginUI : MonoBehaviour
         AuthManager.Instance.RegisterWithEmail(email, password, OnLoginSuccess, OnLoginError);
     }
 
-    private void OnLoginSuccess(ApiService.UserProfile profile)
+    private void OnLoginSuccess(UserProfile profile)
     {
         ShowStatus($"Welcome, {profile.display_name ?? profile.email}!", Color.green);
         Debug.Log($"User Profile: Coins={profile.coins}, XP={profile.xp}, Level={profile.level}");

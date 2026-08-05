@@ -119,6 +119,26 @@ public class ApiService : MonoBehaviour
         return request;
     }
 
+    public IEnumerator GetUserProfile(string firebaseUid, Action<UserProfile> onSuccess, Action<string> onError)
+    {
+        string url = $"{GATEWAY_URL}/auth/api/me/{firebaseUid}";
+        using (UnityWebRequest request = UnityWebRequest.Get(url))
+        {
+            request.SetRequestHeader("Content-Type", "application/json");
+            yield return request.SendWebRequest();
+
+            if (request.result == UnityWebRequest.Result.Success)
+            {
+                UserProfile profile = JsonUtility.FromJson<UserProfile>(request.downloadHandler.text);
+                onSuccess?.Invoke(profile);
+            }
+            else
+            {
+                onError?.Invoke(request.error);
+            }
+        }
+    }
+
     private void HandleError(string context, UnityWebRequest request, Action<string> onError)
     {
         Debug.LogError($"{context}: {request.error}");
@@ -127,17 +147,5 @@ public class ApiService : MonoBehaviour
     }
 
 
-    [Serializable]
-    public class UserProfile
-    {
-        public string session_id;
-        public string firebase_uid;
-        public string display_name;
-        public string email;
-        public string photo_url;
-        public int coins;
-        public int xp;
-        public int level;
-    }
 }
     

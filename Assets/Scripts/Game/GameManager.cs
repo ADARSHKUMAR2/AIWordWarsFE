@@ -39,6 +39,12 @@ public class GameManager : MonoBehaviour
     [Header("Settings")]
     public int difficulty = 5;
 
+    [Header("Progression HUD")]
+    public TextMeshProUGUI xpText;         // e.g. "XP: 250 / 500"
+    public TextMeshProUGUI coinsText;      // e.g. "💰 120"
+    public TextMeshProUGUI levelText;      // e.g. "Lv.3"
+    public GameObject levelUpPanel;  
+
     // State Variables
     private string currentPuzzleId;
     private float puzzleStartTime;
@@ -75,6 +81,7 @@ public class GameManager : MonoBehaviour
             classicNextButton.onClick.AddListener(LoadPuzzle);
 
         SetupModePanels();
+        UpdateProgressionHUD();
         
         // 3. Start the game loop
         isPlaying = true;
@@ -209,8 +216,20 @@ public class GameManager : MonoBehaviour
             var req = new SolveRequest { puzzle_id = currentPuzzleId, answer = answer, time_taken = timeTaken, user_id = userId };
             StartCoroutine(GameApiService.Instance.SolvePuzzle(req, res => {
                 if (res.correct) totalScore += res.score;
-                feedbackText.text = res.correct ? $"<color=green>Correct!</color> +{res.score}" : $"<color=red>Incorrect.</color> Word: {res.correct_answer}";
+
+                string fb = res.correct
+                    ? $"<color=green>Correct!</color> +{res.score}"
+                    : $"<color=red>Incorrect.</color> Word: {res.correct_answer}";
+
+                if (res.correct && res.xp_earned > 0)
+                    fb += $"\n<color=yellow>+{res.xp_earned} XP  💰+{res.coins_earned}</color>";
+
+                feedbackText.text = fb;
+
                 UpdateScoreUI();
+                if (res.progression != null)
+                    ShowProgressionFeedback(res.progression);
+
                 if (classicNextButton != null) classicNextButton.interactable = true;
                 isWaitingForNetwork = false;
             }, OnError));
@@ -245,6 +264,58 @@ public class GameManager : MonoBehaviour
                 Invoke(nameof(LoadPuzzle), 1.0f); // Auto advance
             }, OnError));
         }
+    }
+
+    // ─────────────────────────────────────────
+    // PROGRESSION FEEDBACK
+    // ─────────────────────────────────────────
+    
+    /// <summary>
+    /// Called after a correct solve to update the HUD with live XP/coin/level data.
+    /// Also triggers the level-up panel if the player leveled up.
+    /// </summary>
+    private void ShowProgressionFeedback(ProgressionData progression)
+    {
+        // Update the live HUD
+        UpdateProgressionHUD(progression.xp, progression.coins, progression.level, progression.xp_to_next_level);
+
+        // Show level-up panel if player leveled up
+        if (progression.leveled_up && levelUpPanel != null)
+        {
+            levelUpPanel.SetActive(true);
+            // Auto-hide after 2.5 seconds
+            Invoke(nameof(HideLevelUpPanel), 2.5f);
+            Debug.Log($"🎉 Level Up! {progression.old_level} → {progression.level}");
+        }
+    }
+
+    private void HideLevelUpPanel()
+    {
+        if (levelUpPanel != null) levelUpPanel.SetActive(false);
+    }
+
+    /// <summary>
+    /// Reads current values from AuthManager (on scene start) or takes live values from a solve response.
+    /// </summary>
+    private void UpdateProgressionHUD(int xp = -1, int coins = -1, int level = -1, int xpToNext = -1)
+    {
+        // If no live values passed, read from AuthManager cache (set at login)
+        if (xp == -1 && AuthManager.Instance != null)
+        {
+            xp = AuthManager.Instance.CurrentXP;
+            coins = AuthManager.Instance.CurrentCoins;
+            level = AuthManager.Instance.CurrentLevel;
+            xpToNext = AuthManager.Instance.CurrentXPToNext;
+        }
+
+        if (xpText != null)
+            xpText.text = xpToNext > 0 ? $"XP: {xp} / {xpToNext}" : $"XP: {xp} (MAX)";
+
+        if (coinsText != null)
+            coinsText.text = $"💰 {coins}";
+
+        if (levelText != null)
+            levelText.text = $"Lv.{level}";
     }
 
     // ─────────────────────────────────────────

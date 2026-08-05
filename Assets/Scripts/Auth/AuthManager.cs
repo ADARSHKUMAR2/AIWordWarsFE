@@ -17,6 +17,12 @@ public class AuthManager : MonoBehaviour
 
     public string CurrentSessionId { get; private set; }
 
+    // ── Cached progression stats (set at login) ──
+    public int CurrentXP { get; private set; }
+    public int CurrentCoins { get; private set; }
+    public int CurrentLevel { get; private set; }
+    public int CurrentXPToNext { get; private set; }
+
     private void Awake()
     {
         if (Instance == null)
@@ -60,26 +66,49 @@ public class AuthManager : MonoBehaviour
             Debug.Log("🔍 Found saved session, validating...");
             CurrentSessionId = savedSession;
             
-            // Call ApiService to validate session
             StartCoroutine(ApiService.Instance.ValidateSession(savedSession, (isValid) => {
-                if(isValid) {
-                    Debug.Log("✅ Session Valid! Proceed to Game.");
-                    SceneManager.LoadScene("MainMenuScene");
-                } else {
+                if (isValid)
+                {
+                    Debug.Log("✅ Session Valid!");
+                    string savedUid = PlayerPrefs.GetString("firebase_uid", "");
+                    if (!string.IsNullOrEmpty(savedUid))
+                    {
+                        // Fetch progression first, THEN load scene inside the callback
+                        StartCoroutine(ApiService.Instance.GetUserProfile(savedUid, (profile) => {
+                            CurrentXP = profile.xp;
+                            CurrentCoins = profile.coins;
+                            CurrentLevel = profile.level;
+                            CurrentXPToNext = profile.xp_to_next_level;
+                            Debug.Log($"✅ Progression restored: Lv.{CurrentLevel}, XP={CurrentXP}, Coins={CurrentCoins}");
+                            SceneManager.LoadScene("MainMenuScene"); // ← only here
+                        }, (err) => {
+                            Debug.LogWarning($"Could not fetch progression on resume: {err}");
+                            SceneManager.LoadScene("MainMenuScene"); // ← fallback, still load
+                        }));
+                        // NO SceneManager.LoadScene here — let the coroutine handle it
+                    }
+                    else
+                    {
+                        // No saved UID (edge case), just go to menu
+                        SceneManager.LoadScene("MainMenuScene");
+                    }
+                }
+                else
+                {
                     Debug.Log("❌ Session Invalid. Clearing.");
-                    SignOut(); // Clear the bad session locally
+                    SignOut();
                 }
             }));
         }
     }
-    
+
     // Sign in with email and password
-    public void SignInWithEmail(string email, string password, Action<ApiService.UserProfile> onSuccess, Action<string> onError)
+    public void SignInWithEmail(string email, string password, Action<UserProfile> onSuccess, Action<string> onError)
     {
         StartCoroutine(SignInWithEmailCoroutine(email, password, onSuccess, onError));
     }
 
-    private IEnumerator SignInWithEmailCoroutine(string email, string password, Action<ApiService.UserProfile> onSuccess, Action<string> onError)
+    private IEnumerator SignInWithEmailCoroutine(string email, string password, Action<UserProfile> onSuccess, Action<string> onError)
     {
         var signInTask = auth.SignInWithEmailAndPasswordAsync(email, password);
         yield return new WaitUntil(() => signInTask.IsCompleted);
@@ -108,10 +137,18 @@ public class AuthManager : MonoBehaviour
         string idToken = tokenTask.Result;
         Debug.Log("✅ Got Firebase ID token");
 
-        Action<ApiService.UserProfile> wrappedSuccess = (profile) => 
+        Action<UserProfile> wrappedSuccess = (profile) => 
         {
             CurrentSessionId = profile.session_id;
+            CurrentXP = profile.xp;
+            CurrentCoins = profile.coins;
+            CurrentLevel = profile.level;
+            // xp_to_next_level is not in UserProfile yet — set a placeholder
+            CurrentXPToNext = profile.xp_to_next_level;
+
             PlayerPrefs.SetString("session_id", profile.session_id);
+            PlayerPrefs.SetString("firebase_uid", profile.firebase_uid);  // ← save UID
+
             PlayerPrefs.Save();
             Debug.Log($"✅ Session saved locally: {CurrentSessionId}");
             
@@ -123,12 +160,12 @@ public class AuthManager : MonoBehaviour
     }
 
     // Register with email and password
-    public void RegisterWithEmail(string email, string password, Action<ApiService.UserProfile> onSuccess, Action<string> onError)
+    public void RegisterWithEmail(string email, string password, Action<UserProfile> onSuccess, Action<string> onError)
     {
         StartCoroutine(RegisterWithEmailCoroutine(email, password, onSuccess, onError));
     }
 
-    private IEnumerator RegisterWithEmailCoroutine(string email, string password, Action<ApiService.UserProfile> onSuccess, Action<string> onError)
+    private IEnumerator RegisterWithEmailCoroutine(string email, string password, Action<UserProfile> onSuccess, Action<string> onError)
     {
         var registerTask = auth.CreateUserWithEmailAndPasswordAsync(email, password);
         yield return new WaitUntil(() => registerTask.IsCompleted);
@@ -166,7 +203,12 @@ public class AuthManager : MonoBehaviour
 
         // 3. Clear local session data
         CurrentSessionId = null;
+        CurrentXP = 0;
+        CurrentCoins = 0;
+        CurrentLevel = 1;
+        CurrentXPToNext = 0;
         PlayerPrefs.DeleteKey("session_id");
+        PlayerPrefs.DeleteKey("firebase_uid");  
         PlayerPrefs.Save();
         
         Debug.Log("✅ Signed out completely and cleared local session.");

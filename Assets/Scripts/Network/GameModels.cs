@@ -41,6 +41,9 @@ public class SolveResponse
     public int score;
     public string feedback;
     public string correct_answer;
+    public int xp_earned;
+    public int coins_earned;
+    public ProgressionData progression;
 }
 
 // ─────────────────────────────────────────
@@ -117,4 +120,37 @@ public class SurvivalSolveResponse
     public bool game_over;
     public string feedback;
     public string correct_answer;
+}
+
+/// <summary>
+/// Nested object returned inside SolveResponse when a player earns XP/coins.
+/// Mirrors the backend's 'progression' field from auth-service.
+/// </summary>
+[Serializable]
+public class ProgressionData
+{
+    public string firebase_uid;
+    public int xp;
+    public int coins;
+    public int level;
+    public bool leveled_up;
+    public int old_level;
+    public int xp_earned;
+    public int coins_earned;
+    public int xp_to_next_level;
+}
+
+// ─────────────────────────────────────────
+// PROGRESSION API MODEL
+// ─────────────────────────────────────────
+
+[Serializable]
+public class ProgressionResponse
+{
+    public string firebase_uid;
+    public string display_name;
+    public int xp;
+    public int coins;
+    public int level;
+    public int xp_to_next_level;
 }
