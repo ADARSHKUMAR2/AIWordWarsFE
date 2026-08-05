@@ -36,6 +36,12 @@ public class GameApiService : MonoBehaviour
             request.downloadHandler = new DownloadHandlerBuffer();
             request.SetRequestHeader("Content-Type", "application/json");
 
+            // THE AUTHORIZATION HEADER
+            if (AuthManager.Instance != null && !string.IsNullOrEmpty(AuthManager.Instance.CurrentSessionId))
+            {
+                request.SetRequestHeader("Authorization", $"Bearer {AuthManager.Instance.CurrentSessionId}");
+            }
+    
             yield return request.SendWebRequest();
 
             if (request.result == UnityWebRequest.Result.Success)
@@ -65,6 +71,12 @@ public class GameApiService : MonoBehaviour
             request.uploadHandler = new UploadHandlerRaw(bodyRaw);
             request.downloadHandler = new DownloadHandlerBuffer();
             request.SetRequestHeader("Content-Type", "application/json");
+
+            // THE AUTHORIZATION HEADER
+            if (AuthManager.Instance != null && !string.IsNullOrEmpty(AuthManager.Instance.CurrentSessionId))
+            {
+                request.SetRequestHeader("Authorization", $"Bearer {AuthManager.Instance.CurrentSessionId}");
+            }
 
             yield return request.SendWebRequest();
 
