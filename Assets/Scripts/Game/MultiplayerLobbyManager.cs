@@ -184,7 +184,8 @@ public class MultiplayerLobbyManager : MonoBehaviour
                         _isPolling = false;
                         SetCreateStatus("Opponent joined! Starting game...");
                         
-                        string wsUrl = $"ws://localhost:8007/ws/{roomCode}";
+                        string wsUrl = $"ws://127.0.0.1:8007/ws/{roomCode}";
+
                         PlayerPrefs.SetString("mp_ws_url", wsUrl);
                         PlayerPrefs.SetString("mp_room_code", roomCode);
                         PlayerPrefs.Save();
