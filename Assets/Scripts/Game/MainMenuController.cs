@@ -8,6 +8,7 @@ public class MainMenuController : MonoBehaviour
     public Button classicModeButton;
     public Button timeAttackButton;
     public Button survivalButton;
+    public Button multiplayerButton; 
     
     [Header("Other UI")]
     public Button logoutButton;
@@ -16,8 +17,12 @@ public class MainMenuController : MonoBehaviour
     [Header("Panels")]
     public GameObject mainMenuPanel;    
     public GameObject leaderboardPanel;
+    public GameObject multiplayerPanel;
+
     [Header("Leaderboard")]
     public LeaderboardManager leaderboardManager;
+    [Header("Multiplayer")]
+    public MultiplayerLobbyManager multiplayerLobbyManager;
 
     private void Start()
     {
@@ -26,9 +31,10 @@ public class MainMenuController : MonoBehaviour
         survivalButton.onClick.AddListener(() => StartGameMode("Survival"));
         
         if (logoutButton != null)
-        {
             logoutButton.onClick.AddListener(OnLogoutClicked);
-        }
+        
+        if (multiplayerButton != null)
+            multiplayerButton.onClick.AddListener(OpenMultiplayerLobby);
         
         if (leaderboardButton != null)
             leaderboardButton.onClick.AddListener(OpenLeaderboard);
@@ -36,6 +42,9 @@ public class MainMenuController : MonoBehaviour
 
         if (leaderboardPanel != null)
             leaderboardPanel.SetActive(false);
+
+        if (multiplayerPanel != null)
+            multiplayerPanel.SetActive(false);  
     }
 
     private void StartGameMode(string modeName)
@@ -65,6 +74,24 @@ public class MainMenuController : MonoBehaviour
     {
         // Show main menu, hide leaderboard panel
         if (leaderboardPanel != null) leaderboardPanel.SetActive(false);
+        if (mainMenuPanel != null) mainMenuPanel.SetActive(true);
+    }
+
+    // ── MULTIPLAYER LOBBY
+    private void OpenMultiplayerLobby()
+    {
+        if (mainMenuPanel != null) mainMenuPanel.SetActive(false);
+        if (leaderboardPanel != null) leaderboardPanel.SetActive(false);
+        if (multiplayerPanel != null) multiplayerPanel.SetActive(true);
+
+        // Reset the lobby UI to its default state every time it's opened
+        if (multiplayerLobbyManager != null)
+            multiplayerLobbyManager.ResetToMainPanel();
+    }
+
+    public void CloseMultiplayerLobby()
+    {
+        if (multiplayerPanel != null) multiplayerPanel.SetActive(false);
         if (mainMenuPanel != null) mainMenuPanel.SetActive(true);
     }
 

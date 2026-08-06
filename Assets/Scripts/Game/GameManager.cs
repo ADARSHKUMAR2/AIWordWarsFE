@@ -64,6 +64,14 @@ public class GameManager : MonoBehaviour
 
     private void Start()
     {
+        // If this is a multiplayer session, disable this manager entirely.
+        // MultiplayerGameManager will take over.
+        if (PlayerPrefs.GetInt("mp_is_multiplayer", 0) == 1)
+        {
+            gameObject.SetActive(false);
+            return;
+        }
+
         // 1. Read which mode the user selected in the Main Menu
         string savedMode = PlayerPrefs.GetString("SelectedGameMode", "Classic");
         if (System.Enum.TryParse(savedMode, out GameMode parsedMode))
