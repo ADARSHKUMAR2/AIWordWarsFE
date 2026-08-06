@@ -5,7 +5,8 @@ using UnityEngine.SceneManagement;
 
 public class GameManager : MonoBehaviour
 {
-    public enum GameMode { Classic, TimeAttack, Survival }
+    public enum GameMode { Classic, TimeAttack, Survival, DailyChallenge } // Add DailyChallenge
+
     public GameMode currentMode;
 
     [Header("Common UI")]
@@ -79,6 +80,19 @@ public class GameManager : MonoBehaviour
             currentMode = parsedMode;
         }
 
+        // IF DAILY CHALLENGE, LET THE OTHER MANAGER HANDLE IT
+        if (currentMode == GameMode.DailyChallenge)
+        {
+            if (classicPanel != null) classicPanel.SetActive(false);
+            if (timeAttackPanel != null) timeAttackPanel.SetActive(false);
+            if (survivalPanel != null) survivalPanel.SetActive(false);
+            if (gameOverPanel != null) gameOverPanel.SetActive(false);
+            
+            // Do not run the rest of GameManager setup
+            this.enabled = false; 
+            return;
+        }
+
         // 2. Setup initial UI state
         gameOverPanel.SetActive(false);
         submitButton.interactable = false;
@@ -100,6 +114,8 @@ public class GameManager : MonoBehaviour
 
     private void Update()
     {
+        if (currentMode == GameMode.DailyChallenge) return;
+        
         if (!isPlaying || isWaitingForNetwork) return;
 
         if (currentMode == GameMode.TimeAttack)

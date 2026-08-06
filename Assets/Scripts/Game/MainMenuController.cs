@@ -1,7 +1,8 @@
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.SceneManagement;
-
+using TMPro;
+using DateTime = System.DateTime;
 public class MainMenuController : MonoBehaviour
 {
     [Header("Mode Buttons")]
@@ -24,6 +25,10 @@ public class MainMenuController : MonoBehaviour
     [Header("Multiplayer")]
     public MultiplayerLobbyManager multiplayerLobbyManager;
 
+    [Header("Daily Challenge UI")]
+    public Button dailyChallengeButton; // Add this slot
+    public TextMeshProUGUI dailyChallengeButtonText; // Add this slot
+
     private void Start()
     {
         classicModeButton.onClick.AddListener(() => StartGameMode("Classic"));
@@ -45,7 +50,33 @@ public class MainMenuController : MonoBehaviour
 
         if (multiplayerPanel != null)
             multiplayerPanel.SetActive(false);  
+
+         // Setup Daily Challenge Button
+        if (dailyChallengeButton != null)
+        {
+            CheckDailyChallengeStatus();
+            dailyChallengeButton.onClick.AddListener(() => StartGameMode("DailyChallenge"));
+        }
+        
     }
+
+    private void CheckDailyChallengeStatus()
+    {
+        string todayDate = DateTime.UtcNow.ToString("yyyy-MM-dd");
+        string lastPlayed = PlayerPrefs.GetString("LastDailyChallengeCompletedDate", "");
+
+        if (todayDate == lastPlayed)
+        {
+            dailyChallengeButton.interactable = false;
+            if (dailyChallengeButtonText != null) dailyChallengeButtonText.text = "Come back tomorrow!";
+        }
+        else
+        {
+            dailyChallengeButton.interactable = true;
+            if (dailyChallengeButtonText != null) dailyChallengeButtonText.text = "Play Daily Challenge";
+        }
+    }
+
 
     private void StartGameMode(string modeName)
     {

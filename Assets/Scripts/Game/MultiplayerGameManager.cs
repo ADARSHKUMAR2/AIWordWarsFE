@@ -57,6 +57,8 @@ public class MultiplayerGameManager : MonoBehaviour
 
         if (!isMultiplayer)
         {
+            if (mpResultPanel != null) mpResultPanel.SetActive(false);
+            
             // Not a multiplayer session — disable this manager and let GameManager run
             gameObject.SetActive(false);
             return;

@@ -1461,6 +1461,7 @@ GameObject:
   - component: {fileID: 821513742}
   - component: {fileID: 821513743}
   - component: {fileID: 821513744}
+  - component: {fileID: 821513745}
   m_Layer: 0
   m_Name: GameManager
   m_TagString: Untagged
@@ -1585,6 +1586,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d2ad2a63e55c64e5e8a205613447b0b5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::AdManager
+--- !u!114 &821513745
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 821513735}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 433cacdf3d99f4bbf94f102978c47c70, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::DailyChallengeApiService
 --- !u!1 &1002264487
 GameObject:
   m_ObjectHideFlags: 0
