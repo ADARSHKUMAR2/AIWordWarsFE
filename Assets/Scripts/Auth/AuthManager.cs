@@ -13,7 +13,15 @@ public class AuthManager : MonoBehaviour
     private FirebaseUser currentUser;
 
     public bool IsLoggedIn => currentUser != null;
-    public string CurrentUserUID => currentUser?.UserId;
+    public string CurrentUserUID 
+    {
+        get 
+        {
+            if (currentUser != null) return currentUser.UserId;
+            string savedUid = PlayerPrefs.GetString("firebase_uid", "");
+            return string.IsNullOrEmpty(savedUid) ? null : savedUid;
+        }
+    }
 
     public string CurrentSessionId { get; private set; }
 

@@ -244,7 +244,7 @@ public class GameManager : MonoBehaviour
                     StartCoroutine(LeaderboardApiService.Instance.GetPlayerRank("global", userId, "simple",
                         (rankData) => {
                             if (rankData != null)
-                                feedbackText.text += $"\n<color=cyan>🏆 Global Rank: #{rankData.rank}</color>";
+                                feedbackText.text += $"\n<color=#00FFFF>Global Rank: #{rankData.rank}</color>";
                         },
                         (err) => Debug.LogWarning("Could not fetch rank: " + err)
                     ));
