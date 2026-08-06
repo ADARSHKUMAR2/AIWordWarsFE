@@ -57,9 +57,13 @@ public class MultiplayerGameManager : MonoBehaviour
 
         if (!isMultiplayer)
         {
+            // 🟢 FIX: Explicitly hide ALL multiplayer UI elements before disabling the manager
             if (mpResultPanel != null) mpResultPanel.SetActive(false);
             
-            // Not a multiplayer session — disable this manager and let GameManager run
+            // Also hide the status text (and its parent if you placed it in a panel)
+            if (mpStatusText != null) mpStatusText.gameObject.SetActive(false);
+            
+            // disable this manager and let GameManager/DailyChallengeManager run
             gameObject.SetActive(false);
             return;
         }
