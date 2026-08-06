@@ -93,6 +93,9 @@ public class MultiplayerGameManager : MonoBehaviour
         // Connect WebSocket
         string wsUrl   = PlayerPrefs.GetString("mp_ws_url");
         string userId  = AuthManager.Instance?.CurrentUserUID;
+        
+        Debug.Log($"[MP_GameManager] WS URL: {wsUrl}, UserID: {userId}");
+        
         _ = ConnectWebSocket(wsUrl, userId);
     }
 
@@ -100,6 +103,8 @@ public class MultiplayerGameManager : MonoBehaviour
 
     private async Task ConnectWebSocket(string wsUrl, string userId)
     {
+        Debug.Log("[MP_GameManager] Subscribing to WS events and calling Connect...");
+        
         // Subscribe to events BEFORE connecting
         MultiplayerWebSocketService.Instance.OnWaiting              += SetStatus;
         MultiplayerWebSocketService.Instance.OnGameStart            += OnGameStart;
@@ -109,12 +114,15 @@ public class MultiplayerGameManager : MonoBehaviour
         MultiplayerWebSocketService.Instance.OnError                += err => SetStatus($"⚠️ {err}");
 
         await MultiplayerWebSocketService.Instance.Connect(wsUrl, userId);
+        Debug.Log("[MP_GameManager] Await Connect finished.");
     }
 
     // ── WEBSOCKET EVENT HANDLERS ─────────────────────────────────────────────
 
     private void OnGameStart(WsGameStart data)
     {
+        Debug.Log($"[MP_GameManager] OnGameStart event fired! Scrambled: {data.scrambled}");
+        
         scrambledWordText.text = data.scrambled.ToUpper();
         hintText.text = !string.IsNullOrEmpty(data.hint) ? "Hint: " + data.hint : "";
         feedbackText.text = "🆚 Solve it before your opponent!";

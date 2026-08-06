@@ -1,26 +1,23 @@
 using System;
-using System.Collections;
-using System.Net.WebSockets;
+using System.Collections.Generic;
 using System.Text;
-using System.Threading;
 using System.Threading.Tasks;
+using NativeWebSocket;
 using UnityEngine;
 
 /// <summary>
 /// Manages the WebSocket connection to the multiplayer-session-service.
+/// Uses NativeWebSocket (https://github.com/endel/NativeWebSocket) which
+/// works correctly in Unity Editor, macOS, iOS, Android, and WebGL.
 ///
-/// USAGE:
-///   1. Call Connect(wsUrl, userId) after matchmaking succeeds.
-///   2. Subscribe to events: OnGameStart, OnAnswerResult, OnGameOver, OnOpponentDisconnected.
-///   3. Call SubmitAnswer(answer, timeTaken) when the player submits.
-///   4. Call Disconnect() when leaving the game.
+/// Connect URL: ws://localhost:8007/ws/{ROOM_CODE}?user_id={FIREBASE_UID}
 /// </summary>
 public class MultiplayerWebSocketService : MonoBehaviour
 {
     // ── Singleton ────────────────────────────────────────────────────────────
     public static MultiplayerWebSocketService Instance { get; private set; }
 
-    // ── Events (fire on the main thread via _mainThreadActions) ─────────────
+    // ── Events (fired on Unity's main thread via NativeWebSocket's dispatcher) ──
     public event Action<string> OnWaiting;
     public event Action<WsGameStart> OnGameStart;
     public event Action<WsAnswerResult> OnAnswerResult;
@@ -29,13 +26,8 @@ public class MultiplayerWebSocketService : MonoBehaviour
     public event Action<string> OnError;
 
     // ── Internal state ───────────────────────────────────────────────────────
-    private ClientWebSocket _ws;
-    private CancellationTokenSource _cts;
+    private WebSocket _ws;
     private bool _isConnected = false;
-
-    // Thread-safe queue to dispatch WebSocket callbacks to Unity's main thread
-    private readonly System.Collections.Generic.Queue<Action> _mainThreadActions
-        = new System.Collections.Generic.Queue<Action>();
 
     private void Awake()
     {
@@ -52,13 +44,12 @@ public class MultiplayerWebSocketService : MonoBehaviour
 
     private void Update()
     {
-        // Drain the action queue on Unity's main thread each frame
-        lock (_mainThreadActions)
+        // CRITICAL: NativeWebSocket requires this to dispatch messages on the main thread
+        if (_ws != null)
         {
-            while (_mainThreadActions.Count > 0)
-            {
-                _mainThreadActions.Dequeue()?.Invoke();
-            }
+#if !UNITY_WEBGL || UNITY_EDITOR
+            _ws.DispatchMessageQueue();
+#endif
         }
     }
 
@@ -66,38 +57,54 @@ public class MultiplayerWebSocketService : MonoBehaviour
 
     /// <summary>
     /// Connect to the multiplayer session WebSocket.
-    /// wsUrl example: "ws://localhost:8007/ws/AB12CD?user_id=firebase_uid_here"
+    /// wsUrl example: "ws://localhost:8007/ws/AB12CD"
+    /// userId: the Firebase UID — appended as ?user_id= query param
     /// </summary>
     public async Task Connect(string wsUrl, string userId)
     {
         if (_isConnected)
         {
-            Debug.LogWarning("MultiplayerWebSocketService: Already connected.");
+            Debug.LogWarning("[WS] Already connected.");
             return;
         }
 
-        _ws = new ClientWebSocket();
-        _cts = new CancellationTokenSource();
+        // Append user_id as query param
+        if (!wsUrl.Contains("user_id="))
+            wsUrl += $"?user_id={userId}";
 
-        try
+        Debug.Log($"[WS] Connecting to: {wsUrl}");
+
+        _ws = new WebSocket(wsUrl);
+
+        _ws.OnOpen += () =>
         {
-            // Append user_id as query param if not already in url
-            if (!wsUrl.Contains("user_id="))
-                wsUrl += $"?user_id={userId}";
-
-            Debug.Log($"[WS] Connecting to {wsUrl}");
-            await _ws.ConnectAsync(new Uri(wsUrl), _cts.Token);
             _isConnected = true;
-            Debug.Log("[WS] Connected!");
+            Debug.Log("[WS] ✅ Connected!");
+        };
 
-            // Start receiving in background
-            _ = ReceiveLoop();
-        }
-        catch (Exception ex)
+        _ws.OnError += (err) =>
         {
-            Debug.LogError($"[WS] Connection failed: {ex.Message}");
-            Enqueue(() => OnError?.Invoke($"Connection failed: {ex.Message}"));
-        }
+            Debug.LogError($"[WS] ❌ Error: {err}");
+            _isConnected = false;
+            OnError?.Invoke(err);
+        };
+
+        _ws.OnClose += (code) =>
+        {
+            _isConnected = false;
+            Debug.Log($"[WS] 🔌 Closed. Code: {code}");
+        };
+
+        _ws.OnMessage += (bytes) =>
+        {
+            string text = Encoding.UTF8.GetString(bytes);
+            Debug.Log($"[WS] 📨 Received: {text}");
+            HandleMessage(text);
+        };
+
+        // This actually initiates the TCP connection
+        await _ws.Connect();
+        Debug.Log("[WS] Await Connect() returned.");
     }
 
     /// <summary>
@@ -105,25 +112,15 @@ public class MultiplayerWebSocketService : MonoBehaviour
     /// </summary>
     public async Task SubmitAnswer(string answer, float timeTaken)
     {
-        if (!_isConnected || _ws == null) return;
+        if (_ws == null || _ws.State != WebSocketState.Open)
+        {
+            Debug.LogWarning("[WS] Cannot send — not connected.");
+            return;
+        }
 
         string msg = $"{{\"type\":\"submit_answer\",\"answer\":\"{answer}\",\"time_taken\":{timeTaken}}}";
-        byte[] bytes = Encoding.UTF8.GetBytes(msg);
-
-        try
-        {
-            await _ws.SendAsync(
-                new ArraySegment<byte>(bytes),
-                WebSocketMessageType.Text,
-                true,
-                _cts.Token
-            );
-            Debug.Log($"[WS] Sent answer: {answer}");
-        }
-        catch (Exception ex)
-        {
-            Debug.LogError($"[WS] Send failed: {ex.Message}");
-        }
+        Debug.Log($"[WS] Sending answer: {msg}");
+        await _ws.SendText(msg);
     }
 
     /// <summary>
@@ -135,100 +132,59 @@ public class MultiplayerWebSocketService : MonoBehaviour
         _isConnected = false;
         try
         {
-            _cts?.Cancel();
-            if (_ws.State == WebSocketState.Open)
-                await _ws.CloseAsync(WebSocketCloseStatus.NormalClosure, "Leaving", CancellationToken.None);
-            _ws.Dispose();
-            _ws = null;
+            await _ws.Close();
         }
-        catch { /* ignore close errors */ }
+        catch { }
+        _ws = null;
         Debug.Log("[WS] Disconnected.");
     }
 
-    // ── PRIVATE: Receive loop ────────────────────────────────────────────────
-
-    private async Task ReceiveLoop()
-    {
-        byte[] buffer = new byte[4096];
-
-        while (_ws != null && _ws.State == WebSocketState.Open)
-        {
-            try
-            {
-                var segment = new ArraySegment<byte>(buffer);
-                WebSocketReceiveResult result = await _ws.ReceiveAsync(segment, _cts.Token);
-
-                if (result.MessageType == WebSocketMessageType.Close)
-                {
-                    Debug.Log("[WS] Server closed connection.");
-                    _isConnected = false;
-                    break;
-                }
-
-                string text = Encoding.UTF8.GetString(buffer, 0, result.Count);
-                Debug.Log($"[WS] Received: {text}");
-                HandleMessage(text);
-            }
-            catch (OperationCanceledException)
-            {
-                break;
-            }
-            catch (Exception ex)
-            {
-                Debug.LogError($"[WS] Receive error: {ex.Message}");
-                break;
-            }
-        }
-
-        _isConnected = false;
-    }
+    // ── PRIVATE: Handle incoming messages ────────────────────────────────────
 
     private void HandleMessage(string json)
     {
-        // First parse just the "type" field
-        var base_msg = JsonUtility.FromJson<WsMessage>(json);
-        if (base_msg == null) return;
+        // Parse the type field first
+        var baseMsg = JsonUtility.FromJson<WsMessage>(json);
+        if (baseMsg == null) return;
 
-        switch (base_msg.type)
+        Debug.Log($"[WS] Message type: {baseMsg.type}");
+
+        switch (baseMsg.type)
         {
             case "waiting":
-                Enqueue(() => OnWaiting?.Invoke(base_msg.message));
+                OnWaiting?.Invoke(baseMsg.message);
                 break;
 
             case "game_start":
                 var gameStart = JsonUtility.FromJson<WsGameStart>(json);
-                Enqueue(() => OnGameStart?.Invoke(gameStart));
+                OnGameStart?.Invoke(gameStart);
                 break;
 
             case "answer_result":
                 var ansResult = JsonUtility.FromJson<WsAnswerResult>(json);
-                Enqueue(() => OnAnswerResult?.Invoke(ansResult));
+                OnAnswerResult?.Invoke(ansResult);
                 break;
 
             case "game_over":
                 var gameOver = JsonUtility.FromJson<WsGameOver>(json);
-                Enqueue(() => OnGameOver?.Invoke(gameOver));
+                OnGameOver?.Invoke(gameOver);
                 break;
 
             case "opponent_disconnected":
-                Enqueue(() => OnOpponentDisconnected?.Invoke());
+                OnOpponentDisconnected?.Invoke();
                 break;
 
             case "error":
-                Enqueue(() => OnError?.Invoke(base_msg.message));
+                OnError?.Invoke(baseMsg.message);
                 break;
 
             case "pong":
                 Debug.Log("[WS] Pong received.");
                 break;
-        }
-    }
 
-    private void Enqueue(Action action)
-    {
-        lock (_mainThreadActions)
-        {
-            _mainThreadActions.Enqueue(action);
+            default:
+                Debug.LogWarning($"[WS] Unknown message type: {baseMsg.type}");
+                break;
         }
     }
 

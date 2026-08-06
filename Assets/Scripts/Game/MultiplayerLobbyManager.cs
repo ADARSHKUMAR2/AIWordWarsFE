@@ -113,6 +113,7 @@ public class MultiplayerLobbyManager : MonoBehaviour
 
     private void OnCancelCreate()
     {
+        Debug.Log("[Lobby] Cancel Create clicked.");
         _isPolling = false;
         ShowLobbyMain();
     }
@@ -122,6 +123,8 @@ public class MultiplayerLobbyManager : MonoBehaviour
     private void OnCreateRoomClicked()
     {
         string userId = AuthManager.Instance?.CurrentUserUID;
+        Debug.Log($"[Lobby] OnCreateRoomClicked. UserID: {userId}");
+
         if (string.IsNullOrEmpty(userId)) { SetCreateStatus("Error: Not logged in!"); return; }
 
         lobbyMainPanel.SetActive(false);
@@ -133,11 +136,14 @@ public class MultiplayerLobbyManager : MonoBehaviour
         SetCreateStatus("Please wait...");
         createRoomButton.interactable = false;
 
+        Debug.Log($"[Lobby] Calling API to create room. Diff: {difficulty}");
+
         StartCoroutine(MultiplayerApiService.Instance.CreateRoom(
             userId,
             difficulty,
             onSuccess: (response) =>
             {
+                Debug.Log($"[Lobby] Create Room SUCCESS. Code: {response.room_code}");
                 _currentRoomCode = response.room_code;
                 roomCodeDisplay.text = $"<size=200%><b>{response.room_code}</b></size>";
                 SetCreateStatus("Share this code with your opponent.\nWaiting for them to join...");
@@ -145,6 +151,7 @@ public class MultiplayerLobbyManager : MonoBehaviour
 
                 if (!_isPolling)
                 {
+                    Debug.Log($"[Lobby] Starting poll for room: {response.room_code}");
                     _isPolling = true;
                     StartCoroutine(PollForOpponent(response.room_code));
                 }
@@ -157,37 +164,51 @@ public class MultiplayerLobbyManager : MonoBehaviour
             }
         ));
     }
-
     private IEnumerator PollForOpponent(string roomCode)
     {
+        Debug.Log($"[Lobby] Polling started for {roomCode}");
+        
         while (_isPolling)
         {
-            yield return new WaitForSeconds(2f);
-            if (!_isPolling) yield break;
-
+            Debug.Log($"[Lobby] Polling /api/match/{roomCode}...");
             yield return StartCoroutine(MultiplayerApiService.Instance.PollRoomStatus(
                 roomCode,
                 onSuccess: (status) =>
                 {
-                    if (status.status == "ready")
+                    Debug.Log($"[Lobby] Poll success. Raw status: '{status.status}'");
+                    string cleanStatus = status.status.Trim().ToLower();
+                    
+                    if (cleanStatus == "ready")
                     {
+                        Debug.Log($"[Lobby] 🟢 ROOM READY! Host is preparing to load scene...");
                         _isPolling = false;
                         SetCreateStatus("Opponent joined! Starting game...");
+                        
                         string wsUrl = $"ws://localhost:8007/ws/{roomCode}";
-                        Invoke(nameof(GoToGame_Delayed), 0.8f);
                         PlayerPrefs.SetString("mp_ws_url", wsUrl);
                         PlayerPrefs.SetString("mp_room_code", roomCode);
                         PlayerPrefs.Save();
+                        
+                        Debug.Log($"[Lobby] Host saved prefs. WS: {wsUrl}. Invoking GoToGame_Delayed in 0.8s");
+                        Invoke(nameof(GoToGame_Delayed), 0.8f);
                     }
                 },
-                onError: (_) =>
+                onError: (err) =>
                 {
+                    Debug.LogError($"[Lobby] Poll failed: {err}");
                     _isPolling = false;
                     SetCreateStatus("Room expired. Please try again.");
                     Invoke(nameof(ShowLobbyMain), 2f);
                 }
             ));
+
+            // Wait 0.5s AFTER the HTTP request finishes before polling again
+            if (_isPolling)
+            {
+                yield return new WaitForSeconds(0.5f);
+            }
         }
+        Debug.Log($"[Lobby] Polling stopped for {roomCode}");
     }
 
     // ── JOIN ROOM ────────────────────────────────────────────────────────────
@@ -195,6 +216,8 @@ public class MultiplayerLobbyManager : MonoBehaviour
     private void OnConfirmJoinClicked()
     {
         string code = joinRoomInput.text.Trim().ToUpper();
+        Debug.Log($"[Lobby] OnConfirmJoinClicked. Code entered: {code}");
+
         if (string.IsNullOrEmpty(code) || code.Length < 4)
         {
             SetJoinStatus("Please enter a valid room code.");
@@ -207,11 +230,15 @@ public class MultiplayerLobbyManager : MonoBehaviour
         SetJoinStatus("Joining room...");
         confirmJoinButton.interactable = false;
 
+        Debug.Log($"[Lobby] Calling API to join room {code}...");
+
         StartCoroutine(MultiplayerApiService.Instance.JoinRoom(
             code,
             userId,
             onSuccess: (response) =>
             {
+                Debug.Log($"[Lobby] 🟢 Join Room SUCCESS. WS URL: {response.ws_url}");
+                
                 SetJoinStatus("Joined! Connecting to game...");
                 PlayerPrefs.SetString("mp_ws_url", response.ws_url);
                 PlayerPrefs.SetString("mp_room_code", response.room_code);
@@ -220,6 +247,7 @@ public class MultiplayerLobbyManager : MonoBehaviour
             },
             onError: (err) =>
             {
+                Debug.LogError($"[Lobby] Join Room FAILED: {err}");
                 SetJoinStatus($"Failed to join: {err}");
                 confirmJoinButton.interactable = true;
             }
@@ -231,6 +259,7 @@ public class MultiplayerLobbyManager : MonoBehaviour
     // Called via Invoke after a short delay so the player sees "Starting..." message
     private void GoToGame_Delayed()
     {
+        Debug.Log("[Lobby] GoToGame_Delayed executed! Setting PlayerPrefs and loading GameplayScene...");
         PlayerPrefs.SetString("SelectedGameMode", "Multiplayer");
         PlayerPrefs.SetInt("mp_is_multiplayer", 1);
         PlayerPrefs.Save();
