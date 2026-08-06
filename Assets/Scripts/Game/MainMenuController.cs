@@ -75,6 +75,13 @@ public class MainMenuController : MonoBehaviour
         // Show main menu, hide leaderboard panel
         if (leaderboardPanel != null) leaderboardPanel.SetActive(false);
         if (mainMenuPanel != null) mainMenuPanel.SetActive(true);
+
+        //testing ad display on leaderboard close
+        if (AdManager.Instance != null)
+        {
+            AdManager.Instance.ShowInterstitialAd();
+        }
+
     }
 
     // ── MULTIPLAYER LOBBY
