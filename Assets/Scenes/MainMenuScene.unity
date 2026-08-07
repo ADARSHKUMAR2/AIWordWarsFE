@@ -9327,6 +9327,9 @@ MonoBehaviour:
   multiplayerLobbyManager: {fileID: 1854411824}
   dailyChallengeButton: {fileID: 899916196}
   dailyChallengeButtonText: {fileID: 1121998079}
+  coinsText: {fileID: 1552022318}
+  xpText: {fileID: 1289870041}
+  levelText: {fileID: 2096888836}
 --- !u!4 &1664828592
 Transform:
   m_ObjectHideFlags: 0
