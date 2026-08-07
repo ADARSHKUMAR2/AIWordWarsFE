@@ -26,11 +26,18 @@ public class MainMenuController : MonoBehaviour
     public MultiplayerLobbyManager multiplayerLobbyManager;
 
     [Header("Daily Challenge UI")]
-    public Button dailyChallengeButton; // Add this slot
-    public TextMeshProUGUI dailyChallengeButtonText; // Add this slot
+    public Button dailyChallengeButton;
+    public TextMeshProUGUI dailyChallengeButtonText; 
+
+    [Header("Profile UI")]
+    public TextMeshProUGUI coinsText;
+    public TextMeshProUGUI xpText;
+    public TextMeshProUGUI levelText;
 
     private void Start()
     {
+        UpdateProfileUI();
+        
         classicModeButton.onClick.AddListener(() => StartGameMode("Classic"));
         timeAttackButton.onClick.AddListener(() => StartGameMode("TimeAttack"));
         survivalButton.onClick.AddListener(() => StartGameMode("Survival"));
@@ -58,6 +65,16 @@ public class MainMenuController : MonoBehaviour
             dailyChallengeButton.onClick.AddListener(() => StartGameMode("DailyChallenge"));
         }
         
+    }
+
+    private void UpdateProfileUI()
+    {
+        if (AuthManager.Instance != null)
+        {
+            if (coinsText != null) coinsText.text = $"Coins: {AuthManager.Instance.CurrentCoins}";
+            if (xpText != null) xpText.text = $"XP: {AuthManager.Instance.CurrentXP}";
+            if (levelText != null) levelText.text = $"Level: {AuthManager.Instance.CurrentLevel}";
+        }
     }
 
     private void CheckDailyChallengeStatus()
