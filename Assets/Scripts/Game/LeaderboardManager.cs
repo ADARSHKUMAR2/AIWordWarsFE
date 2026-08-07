@@ -50,6 +50,9 @@ public class LeaderboardManager : MonoBehaviour
 
     private void OnLoaded(LeaderboardResponse response)
     {
+        string json = JsonUtility.ToJson(response, true); // 'true' makes it pretty-print
+        Debug.Log("Leaderboard loaded successfully. JSON:\n" + json);
+
         // Clear existing rows
         foreach (Transform child in entriesContainer)
             Destroy(child.gameObject);

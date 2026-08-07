@@ -197,6 +197,14 @@ public class AuthManager : MonoBehaviour
         yield return SignInWithEmailCoroutine(email, password, onSuccess, onError);
     }
 
+    public void UpdateProgression(int xp, int coins, int level, int xpToNext)
+    {
+        CurrentXP = xp;
+        CurrentCoins = coins;
+        CurrentLevel = level;
+        CurrentXPToNext = xpToNext;
+    }
+
     // Sign out
     public void SignOut()
     {

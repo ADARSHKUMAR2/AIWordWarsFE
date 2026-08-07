@@ -24,8 +24,26 @@ public class DailyChallengeManager : MonoBehaviour
         string savedMode = PlayerPrefs.GetString("SelectedGameMode", "Classic");
         if (savedMode != "DailyChallenge")
         {
-            // 🟢 FIX: Hide the daily challenge panel if we aren't playing it
-            if (dailyChallengePanel != null) dailyChallengePanel.SetActive(false);
+            // Hide the daily challenge panel ONLY if it is not sharing a panel with GameManager
+            GameManager gm = FindObjectOfType<GameManager>();
+            bool isShared = false;
+            
+            if (gm != null && dailyChallengePanel != null)
+            {
+                if (dailyChallengePanel == gm.classicPanel || 
+                    dailyChallengePanel == gm.timeAttackPanel || 
+                    dailyChallengePanel == gm.survivalPanel)
+                {
+                    isShared = true;
+                }
+            }
+
+            // Only disable it if it's a dedicated Daily Challenge panel
+            if (!isShared && dailyChallengePanel != null)
+            {
+                dailyChallengePanel.SetActive(false);
+            }
+            
             this.enabled = false;
             return;
         }

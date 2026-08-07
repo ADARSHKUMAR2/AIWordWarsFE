@@ -320,6 +320,16 @@ public class GameManager : MonoBehaviour
     /// </summary>
     private void ShowProgressionFeedback(ProgressionData progression)
     {
+        if (AuthManager.Instance != null)
+        {
+            AuthManager.Instance.UpdateProgression(
+                progression.xp, 
+                progression.coins, 
+                progression.level, 
+                progression.xp_to_next_level
+            );
+        }
+        
         // Update the live HUD
         UpdateProgressionHUD(progression.xp, progression.coins, progression.level, progression.xp_to_next_level);
 
