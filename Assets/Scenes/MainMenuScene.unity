@@ -7665,9 +7665,9 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: '<b>Multiplayer</b>
+  m_text: '<b>Time Attack</b>
 
-    <size=45><color=#888888>1v1 Live</color></size>'
+    <size=45><color=#888888>60 sec</color></size>'
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
@@ -9330,6 +9330,7 @@ MonoBehaviour:
   coinsText: {fileID: 1552022318}
   xpText: {fileID: 1289870041}
   levelText: {fileID: 2096888836}
+  rankText: {fileID: 1966829074}
 --- !u!4 &1664828592
 Transform:
   m_ObjectHideFlags: 0
@@ -10181,9 +10182,9 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: '<b>Multiplayer</b>
+  m_text: '<b>Survival Mode</b>
 
-    <size=45><color=#888888>1v1 Live</color></size>'
+    <size=45><color=#888888>Survive</color></size>'
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}

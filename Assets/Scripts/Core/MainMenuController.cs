@@ -33,6 +33,7 @@ public class MainMenuController : MonoBehaviour
     public TextMeshProUGUI coinsText;
     public TextMeshProUGUI xpText;
     public TextMeshProUGUI levelText;
+    public TextMeshProUGUI rankText;
 
     private void Start()
     {
@@ -75,6 +76,42 @@ public class MainMenuController : MonoBehaviour
             if (xpText != null) xpText.text = $"XP: {AuthManager.Instance.CurrentXP}";
             if (levelText != null) levelText.text = $"Level: {AuthManager.Instance.CurrentLevel}";
         }
+        FetchAndDisplayRank();
+    }
+
+    private void FetchAndDisplayRank()
+    {
+        if (rankText == null) return;
+        
+        string uid = AuthManager.Instance.CurrentUserUID;
+        if (string.IsNullOrEmpty(uid))
+        {
+            rankText.text = "Rank: -";
+            return;
+        }
+
+        rankText.text = "Rank: ..."; // Loading state
+
+        // Using "global" board and "simple" mode as defaults. Change if needed.
+        StartCoroutine(LeaderboardApiService.Instance.GetPlayerRank("global", uid, "simple", 
+            onSuccess: (rankResponse) => 
+            {
+                if (rankResponse != null)
+                {
+                    rankText.text = $"Rank: {rankResponse.rank}";
+                }
+                else
+                {
+                    // This happens if the API returns 404 (user has no score yet)
+                    rankText.text = "Rank: Unranked";
+                }
+            }, 
+            onError: (errorMsg) => 
+            {
+                Debug.LogWarning($"Failed to get rank for main menu: {errorMsg}");
+                rankText.text = "Rank: N/A";
+            }
+        ));
     }
 
     private void CheckDailyChallengeStatus()
