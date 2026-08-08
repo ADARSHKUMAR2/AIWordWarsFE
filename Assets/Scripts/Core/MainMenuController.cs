@@ -72,9 +72,9 @@ public class MainMenuController : MonoBehaviour
     {
         if (AuthManager.Instance != null)
         {
-            if (coinsText != null) coinsText.text = $"<sprite name=\"coin\"> {AuthManager.Instance.CurrentCoins}";
-            if (xpText != null) xpText.text = $"XP: {AuthManager.Instance.CurrentXP}";
-            if (levelText != null) levelText.text = $"Level: {AuthManager.Instance.CurrentLevel}";
+            if (coinsText != null) coinsText.text = $"<sprite name=\"coin\">{AuthManager.Instance.CurrentCoins}";
+            if (xpText != null) xpText.text = $"<sprite name=\"gem\">{AuthManager.Instance.CurrentXP}";
+            if (levelText != null) levelText.text = $"<sprite name=\"badge\">{AuthManager.Instance.CurrentLevel}";
         }
         FetchAndDisplayRank();
     }

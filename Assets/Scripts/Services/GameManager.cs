@@ -99,6 +99,9 @@ public class GameManager : MonoBehaviour
             if (survivalPanel != null) survivalPanel.SetActive(false);
             if (gameOverPanel != null) gameOverPanel.SetActive(false);
             
+            // Explicitly disable the classic next button just to be safe
+            if (classicNextButton != null) classicNextButton.gameObject.SetActive(false);
+            
             // Do not run the rest of GameManager setup
             this.enabled = false; 
             return;

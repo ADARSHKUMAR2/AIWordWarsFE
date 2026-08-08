@@ -18,7 +18,7 @@ public class DailyChallengeManager : MonoBehaviour
 
     private DailyChallengeData currentChallenge;
 
-    private void Start()
+        private void Start()
     {
         // Only run if the selected mode is DailyChallenge
         string savedMode = PlayerPrefs.GetString("SelectedGameMode", "Classic");
@@ -44,12 +44,22 @@ public class DailyChallengeManager : MonoBehaviour
                 dailyChallengePanel.SetActive(false);
             }
             
+            // NOTE: Removed the gm.classicNextButton hiding from here!
+            
             this.enabled = false;
             return;
         }
 
         // Setup UI
         if (dailyChallengePanel != null) dailyChallengePanel.SetActive(true);
+        
+        // NEW: Hide the Next button if it exists in the shared panel
+        GameManager gmRef = FindObjectOfType<GameManager>();
+        if (gmRef != null && gmRef.classicNextButton != null)
+        {
+            gmRef.classicNextButton.gameObject.SetActive(false);
+        }
+
         submitButton.onClick.AddListener(OnSubmitAnswer);
         quitButton.onClick.AddListener(() => SceneManager.LoadScene("MainMenuScene"));
 
