@@ -46,6 +46,9 @@ public class GameManager : MonoBehaviour
     public TextMeshProUGUI levelText;      // e.g. "Lv.3"
     public GameObject levelUpPanel;  
 
+    [Header("Game Over UI")]
+    public Button gameOverMainMenuButton;
+
     // State Variables
     private string currentPuzzleId;
     private float puzzleStartTime;
@@ -78,6 +81,14 @@ public class GameManager : MonoBehaviour
         if (System.Enum.TryParse(savedMode, out GameMode parsedMode))
         {
             currentMode = parsedMode;
+        }
+
+        if (gameOverMainMenuButton != null)
+        {
+            gameOverMainMenuButton.onClick.AddListener(() => 
+            {
+                ReturnToMainMenu();
+            });
         }
 
         // IF DAILY CHALLENGE, LET THE OTHER MANAGER HANDLE IT
@@ -129,7 +140,7 @@ public class GameManager : MonoBehaviour
                 EndGame();
             }
 
-            timerText.text = $"⏳ {Mathf.CeilToInt(remaining)}s";
+            timerText.text = $"<sprite name=\"timer\"> {Mathf.CeilToInt(remaining)}s";
             timerText.color = remaining <= 10f ? Color.red : Color.white;
         }
         else if (currentMode == GameMode.Survival && !string.IsNullOrEmpty(currentPuzzleId))
@@ -139,7 +150,7 @@ public class GameManager : MonoBehaviour
             {
                 // Timeout in survival costs a heart
                 submitButton.interactable = false;
-                feedbackText.text = "⏰ Too slow!";
+                feedbackText.text = "<sprite name=\"timer\"> Too slow!";
                 SubmitAnswer(""); // Submit empty to trigger backend penalty
             }
         }
@@ -254,7 +265,7 @@ public class GameManager : MonoBehaviour
                     : $"<color=red>Incorrect.</color> Word: {res.correct_answer}";
 
                 if (res.correct && res.xp_earned > 0)
-                    fb += $"\n<color=yellow>+{res.xp_earned} XP  💰+{res.coins_earned}</color>";
+                    fb += $"\n<color=yellow>+{res.xp_earned} XP  <sprite name=\"coin\">+{res.coins_earned}</color>";
 
                 feedbackText.text = fb;
 
@@ -285,7 +296,7 @@ public class GameManager : MonoBehaviour
                 if (res.session_expired) { EndGame(); return; }
                 currentCombo = res.new_combo;
                 totalScore += res.score;
-                feedbackText.text = res.correct ? $"<color=green>✅ +{res.score} {(currentCombo > 1 ? $"x{currentCombo}" : "")}</color>" : $"<color=red>❌ {res.correct_answer}</color> Combo reset!";
+                feedbackText.text = res.correct ? $"<color=green><sprite name=\"check\"> +{res.score} {(currentCombo > 1 ? $"x{currentCombo}" : "")}</color>" : $"<color=red><sprite name=\"close\"> {res.correct_answer}</color> Combo reset!";
                 UpdateScoreUI();
                 UpdateComboUI();
                 isWaitingForNetwork = false;
@@ -303,7 +314,7 @@ public class GameManager : MonoBehaviour
                 
                 if (res.game_over) { EndGame(); return; }
                 
-                feedbackText.text = res.correct ? $"<color=green>✅ +{res.score}</color>" : $"<color=red>❌ {res.correct_answer}</color>";
+                feedbackText.text = res.correct ? $"<color=green><sprite name=\"check\"> +{res.score}</color>" : $"<color=red><sprite name=\"close\"> {res.correct_answer}</color>";
                 isWaitingForNetwork = false;
                 Invoke(nameof(LoadPuzzle), 1.0f); // Auto advance
             }, OnError));
@@ -339,7 +350,7 @@ public class GameManager : MonoBehaviour
             levelUpPanel.SetActive(true);
             // Auto-hide after 2.5 seconds
             Invoke(nameof(HideLevelUpPanel), 2.5f);
-            Debug.Log($"🎉 Level Up! {progression.old_level} → {progression.level}");
+            Debug.Log($"<sprite name=\"celebration\"> Level Up! {progression.old_level} → {progression.level}");
         }
     }
 
@@ -366,7 +377,7 @@ public class GameManager : MonoBehaviour
             xpText.text = xpToNext > 0 ? $"XP: {xp} / {xpToNext}" : $"XP: {xp} (MAX)";
 
         if (coinsText != null)
-            coinsText.text = $"💰 {coins}";
+            coinsText.text = $"<sprite name=\"coin\"> {coins}";
 
         if (levelText != null)
             levelText.text = $"Lv.{level}";
@@ -388,8 +399,16 @@ public class GameManager : MonoBehaviour
         submitButton.interactable = false;
         gameOverPanel.SetActive(true);
         finalScoreText.text = $"Game Over!\nFinal Score: {totalScore}";
-        if(currentMode == GameMode.TimeAttack) timerText.text = "⏳ 0s";
+        if(currentMode == GameMode.TimeAttack) timerText.text = "<sprite name=\"timer\"> 0s";
     }
+
+    public void ReturnToMainMenu()
+    {
+        // Resets the time scale just in case it was paused, and loads the Main Menu
+        Time.timeScale = 1f; 
+        SceneManager.LoadScene("MainMenuScene");
+    }
+
 
     private void UpdateScoreUI()
     {
@@ -400,15 +419,15 @@ public class GameManager : MonoBehaviour
 
     private void UpdateComboUI()
     {
-        if (comboText) comboText.text = currentCombo > 1 ? $"🔥 x{currentCombo}" : "";
+        if (comboText) comboText.text = currentCombo > 1 ? $"<sprite name=\"fire\"> x{currentCombo}" : "";
     }
 
     private void UpdateHeartsUI()
     {
         if (!heartsText) return;
         string h = "";
-        for (int i = 0; i < currentHearts; i++) h += "❤️";
-        for (int i = currentHearts; i < 3; i++) h += "🖤";
+        for (int i = 0; i < currentHearts; i++) h += "<sprite name=\"heart\">";
+        for (int i = currentHearts; i < 3; i++) h += "<sprite name=\"black_heart\">";
         heartsText.text = h;
     }
 }

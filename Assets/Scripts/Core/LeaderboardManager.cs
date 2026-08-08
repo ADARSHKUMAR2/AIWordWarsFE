@@ -59,7 +59,7 @@ public class LeaderboardManager : MonoBehaviour
 
         if (response == null || response.entries == null || response.entries.Length == 0)
         {
-            if (statusText) statusText.text = "No scores yet. Be the first!";
+            if (statusText) statusText.text = "<sprite name=\"leaderboard\"> No scores yet. Be the first!";
             return;
         }
 

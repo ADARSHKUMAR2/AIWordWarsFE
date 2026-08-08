@@ -72,7 +72,7 @@ public class MainMenuController : MonoBehaviour
     {
         if (AuthManager.Instance != null)
         {
-            if (coinsText != null) coinsText.text = $"Coins: {AuthManager.Instance.CurrentCoins}";
+            if (coinsText != null) coinsText.text = $"<sprite name=\"coin\"> {AuthManager.Instance.CurrentCoins}";
             if (xpText != null) xpText.text = $"XP: {AuthManager.Instance.CurrentXP}";
             if (levelText != null) levelText.text = $"Level: {AuthManager.Instance.CurrentLevel}";
         }

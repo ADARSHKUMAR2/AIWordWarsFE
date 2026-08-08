@@ -117,7 +117,7 @@ public class MultiplayerGameManager : MonoBehaviour
         MultiplayerWebSocketService.Instance.OnAnswerResult         += OnAnswerResult;
         MultiplayerWebSocketService.Instance.OnGameOver             += OnGameOver;
         MultiplayerWebSocketService.Instance.OnOpponentDisconnected += OnOpponentDisconnected;
-        MultiplayerWebSocketService.Instance.OnError                += err => SetStatus($"⚠️ {err}");
+        MultiplayerWebSocketService.Instance.OnError                += err => SetStatus($"<sprite name=\"Notification\"> {err}");
 
         await MultiplayerWebSocketService.Instance.Connect(wsUrl, userId);
         Debug.Log("[MP_GameManager] Await Connect finished.");
@@ -145,7 +145,7 @@ public class MultiplayerGameManager : MonoBehaviour
     {
         if (!data.correct)
         {
-            feedbackText.text = "<color=red>❌ Incorrect! Try again.</color>";
+            feedbackText.text = "<color=red><sprite name=\"CrissCross\"> Incorrect! Try again.</color>";
             submitButton.interactable = true;
             answerInputField.text = "";
             answerInputField.Select();
@@ -165,7 +165,7 @@ public class MultiplayerGameManager : MonoBehaviour
         else if (data.your_result == "lose")
             resultMsg = $"<color=red><size=120%><b>😞 YOU LOSE</b></size></color>\nOpponent was faster!\nCorrect word: <b>{data.correct_word}</b>";
         else
-            resultMsg = $"<color=yellow><size=120%><b>⏰ DRAW</b></size></color>\nNobody solved in time!\nCorrect word: <b>{data.correct_word}</b>";
+            resultMsg = $"<color=yellow><size=120%><b><sprite name=\"hourglass\"> DRAW</b></size></color>\nNobody solved in time!\nCorrect word: <b>{data.correct_word}</b>";
 
         ShowResult(resultMsg);
         _ = MultiplayerWebSocketService.Instance.Disconnect();
