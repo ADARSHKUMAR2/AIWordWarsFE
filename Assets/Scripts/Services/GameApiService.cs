@@ -3,10 +3,11 @@ using System.Collections;
 using System.Text;
 using UnityEngine;
 using UnityEngine.Networking;
+using WordWars.Models;
 
 public class GameApiService : MonoBehaviour
 {
-    private const string GATEWAY_URL = "http://localhost:8000"; // Change to your deployed URL in production
+    private string GatewayUrl => AppConfig.Instance.ApiUrl;
 
     public static GameApiService Instance { get; private set; }
 
@@ -47,7 +48,7 @@ public class GameApiService : MonoBehaviour
 
     public IEnumerator GetNewPuzzle(NewPuzzleRequest puzzleRequest, Action<PuzzleResponse> onSuccess, Action<string> onError)
     {
-        string url = $"{GATEWAY_URL}/game/api/puzzle/new";
+        string url = $"{GatewayUrl}/game/api/puzzle/new";
         string jsonBody = JsonUtility.ToJson(puzzleRequest);
 
         using (UnityWebRequest request = BuildPostRequest(url, jsonBody))
@@ -69,7 +70,7 @@ public class GameApiService : MonoBehaviour
 
     public IEnumerator SolvePuzzle(SolveRequest solveRequest, Action<SolveResponse> onSuccess, Action<string> onError)
     {
-        string url = $"{GATEWAY_URL}/game/api/puzzle/solve";
+        string url = $"{GatewayUrl}/game/api/puzzle/solve";
         string jsonBody = JsonUtility.ToJson(solveRequest);
 
         using (UnityWebRequest request = BuildPostRequest(url, jsonBody))
@@ -95,7 +96,7 @@ public class GameApiService : MonoBehaviour
 
     public IEnumerator GetNewTimeAttackPuzzle(NewPuzzleRequest puzzleRequest, Action<TimeAttackPuzzleResponse> onSuccess, Action<string> onError)
     {
-        string url = $"{GATEWAY_URL}/game/api/time-attack/puzzle/new";
+        string url = $"{GatewayUrl}/game/api/time-attack/puzzle/new";
         string jsonBody = JsonUtility.ToJson(puzzleRequest);
 
         using (UnityWebRequest request = BuildPostRequest(url, jsonBody))
@@ -115,7 +116,7 @@ public class GameApiService : MonoBehaviour
 
     public IEnumerator SolveTimeAttackPuzzle(TimeAttackSolveRequest solveRequest, Action<TimeAttackSolveResponse> onSuccess, Action<string> onError)
     {
-        string url = $"{GATEWAY_URL}/game/api/time-attack/puzzle/solve";
+        string url = $"{GatewayUrl}/game/api/time-attack/puzzle/solve";
         string jsonBody = JsonUtility.ToJson(solveRequest);
 
         using (UnityWebRequest request = BuildPostRequest(url, jsonBody))
@@ -139,7 +140,7 @@ public class GameApiService : MonoBehaviour
 
     public IEnumerator GetNewSurvivalPuzzle(NewPuzzleRequest puzzleRequest, Action<SurvivalPuzzleResponse> onSuccess, Action<string> onError)
     {
-        string url = $"{GATEWAY_URL}/game/api/survival/puzzle/new";
+        string url = $"{GatewayUrl}/game/api/survival/puzzle/new";
         string jsonBody = JsonUtility.ToJson(puzzleRequest);
 
         using (UnityWebRequest request = BuildPostRequest(url, jsonBody))
@@ -159,7 +160,7 @@ public class GameApiService : MonoBehaviour
 
     public IEnumerator SolveSurvivalPuzzle(SurvivalSolveRequest solveRequest, Action<SurvivalSolveResponse> onSuccess, Action<string> onError)
     {
-        string url = $"{GATEWAY_URL}/game/api/survival/puzzle/solve";
+        string url = $"{GatewayUrl}/game/api/survival/puzzle/solve";
         string jsonBody = JsonUtility.ToJson(solveRequest);
 
         using (UnityWebRequest request = BuildPostRequest(url, jsonBody))

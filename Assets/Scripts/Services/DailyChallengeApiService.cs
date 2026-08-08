@@ -2,10 +2,11 @@ using UnityEngine;
 using UnityEngine.Networking;
 using System.Collections;
 using System;
+using WordWars.Models;
 
 public class DailyChallengeApiService : MonoBehaviour
 {
-    private readonly string baseUrl = "http://127.0.0.1:8000/daily-challenge/api/daily-challenge"; 
+    private string BaseUrl => $"{AppConfig.Instance.ApiUrl}/daily-challenge/api/daily-challenge"; 
 
     public static DailyChallengeApiService Instance { get; private set; }
 
@@ -19,7 +20,7 @@ public class DailyChallengeApiService : MonoBehaviour
 
     public IEnumerator GetTodaysChallenge(Action<DailyChallengeData> onSuccess, Action<string> onError)
     {
-        string url = $"{baseUrl}/today";
+        string url = $"{BaseUrl}/today";
         using (UnityWebRequest request = UnityWebRequest.Get(url))
         {
             request.SetRequestHeader("Content-Type", "application/json");

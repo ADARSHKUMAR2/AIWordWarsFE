@@ -3,6 +3,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
+using WordWars.Models;
 
 /// <summary>
 /// Controls the Multiplayer Lobby PANEL inside MainMenuScene.
@@ -184,7 +185,7 @@ public class MultiplayerLobbyManager : MonoBehaviour
                         _isPolling = false;
                         SetCreateStatus("Opponent joined! Starting game...");
                         
-                        string wsUrl = $"ws://127.0.0.1:8007/ws/{roomCode}";
+                        string wsUrl = $"{AppConfig.Instance.WsUrl}/ws/{roomCode}";
 
                         PlayerPrefs.SetString("mp_ws_url", wsUrl);
                         PlayerPrefs.SetString("mp_room_code", roomCode);

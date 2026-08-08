@@ -2,10 +2,11 @@ using System;
 using System.Collections;
 using UnityEngine;
 using UnityEngine.Networking;
+using WordWars.Models;
 
 public class LeaderboardApiService : MonoBehaviour
 {
-    private const string GATEWAY_URL = "http://localhost:8000";
+    private string GatewayUrl => AppConfig.Instance.ApiUrl;
 
     public static LeaderboardApiService Instance { get; private set; }
 
@@ -52,7 +53,7 @@ public class LeaderboardApiService : MonoBehaviour
         Action<LeaderboardResponse> onSuccess,
         Action<string> onError)
     {
-        string url = $"{GATEWAY_URL}/leaderboard/api/scores/{boardId}?mode={mode}&limit={limit}";
+        string url = $"{GatewayUrl}/leaderboard/api/scores/{boardId}?mode={mode}&limit={limit}";
 
         using (UnityWebRequest request = BuildGetRequest(url))
         {
@@ -86,7 +87,7 @@ public class LeaderboardApiService : MonoBehaviour
         Action<PlayerRankResponse> onSuccess,
         Action<string> onError)
     {
-        string url = $"{GATEWAY_URL}/leaderboard/api/scores/{boardId}/rank/{firebaseUid}?mode={mode}";
+        string url = $"{GatewayUrl}/leaderboard/api/scores/{boardId}/rank/{firebaseUid}?mode={mode}";
 
         using (UnityWebRequest request = BuildGetRequest(url))
         {

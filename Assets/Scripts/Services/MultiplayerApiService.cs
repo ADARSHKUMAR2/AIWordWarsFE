@@ -3,6 +3,7 @@ using System.Collections;
 using System.Text;
 using UnityEngine;
 using UnityEngine.Networking;
+using WordWars.Models;
 
 /// <summary>
 /// Handles REST calls to the matchmaking-service for creating and joining rooms.
@@ -10,7 +11,7 @@ using UnityEngine.Networking;
 /// </summary>
 public class MultiplayerApiService : MonoBehaviour
 {
-    private const string GATEWAY_URL = "http://localhost:8000";
+    private string GatewayUrl => AppConfig.Instance.ApiUrl;
 
     public static MultiplayerApiService Instance { get; private set; }
 
@@ -36,7 +37,7 @@ public class MultiplayerApiService : MonoBehaviour
     /// </summary>
     public IEnumerator CreateRoom(string userId, int difficulty, Action<CreateRoomResponse> onSuccess, Action<string> onError)
     {
-        string url = $"{GATEWAY_URL}/matchmaking/api/match/create";
+        string url = $"{GatewayUrl}/matchmaking/api/match/create";
 
         CreateRoomRequest payload = new CreateRoomRequest
         {
@@ -74,7 +75,7 @@ public class MultiplayerApiService : MonoBehaviour
     /// </summary>
     public IEnumerator JoinRoom(string roomCode, string userId, Action<JoinRoomResponse> onSuccess, Action<string> onError)
     {
-        string url = $"{GATEWAY_URL}/matchmaking/api/match/join";
+        string url = $"{GatewayUrl}/matchmaking/api/match/join";
 
         JoinRoomRequest payload = new JoinRoomRequest
         {
@@ -112,7 +113,7 @@ public class MultiplayerApiService : MonoBehaviour
     /// </summary>
     public IEnumerator PollRoomStatus(string roomCode, Action<RoomStatusResponse> onSuccess, Action<string> onError)
     {
-        string url = $"{GATEWAY_URL}/matchmaking/api/match/{roomCode.ToUpper()}";
+        string url = $"{GatewayUrl}/matchmaking/api/match/{roomCode.ToUpper()}";
 
         using UnityWebRequest request = UnityWebRequest.Get(url);
         yield return request.SendWebRequest();

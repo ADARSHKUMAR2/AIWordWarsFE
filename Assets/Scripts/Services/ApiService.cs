@@ -3,10 +3,11 @@ using System.Collections;
 using System.Text;
 using UnityEngine;
 using UnityEngine.Networking;
+using WordWars.Models;
 
 public class ApiService : MonoBehaviour
 {
-    private const string GATEWAY_URL = "http://localhost:8000"; // Change to your deployed URL in production
+    private string GatewayUrl => AppConfig.Instance.ApiUrl;
 
     public static ApiService Instance { get; private set; }
 
@@ -26,7 +27,7 @@ public class ApiService : MonoBehaviour
     // POST /auth/api/login
     public IEnumerator LoginWithFirebase(string idToken, Action<UserProfile> onSuccess, Action<string> onError)
     {
-        string url = $"{GATEWAY_URL}/auth/api/login";
+        string url = $"{GatewayUrl}/auth/api/login";
         
         string jsonBody = $"{{\"id_token\": \"{idToken}\"}}";
 
@@ -57,7 +58,7 @@ public class ApiService : MonoBehaviour
 
     public IEnumerator ValidateSession(string sessionId, Action<bool> onComplete)
     {
-        string url = $"{GATEWAY_URL}/auth/api/session/validate";
+        string url = $"{GatewayUrl}/auth/api/session/validate";
         string jsonBody = $"{{\"session_id\": \"{sessionId}\"}}";
 
         using (UnityWebRequest request = CreatePostRequest(url, jsonBody))
@@ -80,7 +81,7 @@ public class ApiService : MonoBehaviour
     // POST /auth/api/logout
     public IEnumerator Logout(string sessionId)
     {
-        string url = $"{GATEWAY_URL}/auth/api/logout";
+        string url = $"{GatewayUrl}/auth/api/logout";
         string jsonBody = $"{{\"session_id\": \"{sessionId}\"}}";
 
         using (UnityWebRequest request = CreatePostRequest(url, jsonBody))
@@ -121,7 +122,7 @@ public class ApiService : MonoBehaviour
 
     public IEnumerator GetUserProfile(string firebaseUid, Action<UserProfile> onSuccess, Action<string> onError)
     {
-        string url = $"{GATEWAY_URL}/auth/api/me/{firebaseUid}";
+        string url = $"{GatewayUrl}/auth/api/me/{firebaseUid}";
         using (UnityWebRequest request = UnityWebRequest.Get(url))
         {
             request.SetRequestHeader("Content-Type", "application/json");

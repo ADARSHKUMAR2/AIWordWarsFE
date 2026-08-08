@@ -18,6 +18,7 @@ using System.Text;
 using UnityEngine;
 using UnityEngine.Networking;
 using WordWars.Models;
+using WordWars.Models;
 
 namespace WordWars.Network
 {
@@ -38,8 +39,8 @@ namespace WordWars.Network
             }
         }
 
-        // API Gateway URL (change for production)
-        private const string BASE_URL = "http://localhost:8000/shop/api";
+        // API Gateway URL (uses AppConfig for environment switching)
+        private string BaseUrl => $"{AppConfig.Instance.ApiUrl}/shop/api";
 
         /// <summary>
         /// Validate a purchase with the backend
@@ -52,7 +53,7 @@ namespace WordWars.Network
             Action<PurchaseValidationResponse> onSuccess,
             Action<string> onError)
         {
-            string url = $"{BASE_URL}/purchase/validate";
+            string url = $"{BaseUrl}/purchase/validate";
 
             // Create request body
             var requestBody = new
@@ -101,7 +102,7 @@ namespace WordWars.Network
             Action<InventoryResponse> onSuccess,
             Action<string> onError)
         {
-            string url = $"{BASE_URL}/inventory/{userId}";
+            string url = $"{BaseUrl}/inventory/{userId}";
 
             using (UnityWebRequest request = UnityWebRequest.Get(url))
             {
@@ -129,7 +130,7 @@ namespace WordWars.Network
             Action<int> onSuccess,  // Returns remaining hints
             Action<string> onError)
         {
-            string url = $"{BASE_URL}/inventory/consume_hint";
+            string url = $"{BaseUrl}/inventory/consume_hint";
 
             var requestBody = new { user_id = userId };
             string jsonBody = JsonUtility.ToJson(requestBody);
@@ -167,7 +168,7 @@ namespace WordWars.Network
             Action<BattlePassResponse> onSuccess,
             Action<string> onError)
         {
-            string url = $"{BASE_URL}/battlepass/{userId}?season_id={seasonId}";
+            string url = $"{BaseUrl}/battlepass/{userId}?season_id={seasonId}";
 
             using (UnityWebRequest request = UnityWebRequest.Get(url))
             {
@@ -197,7 +198,7 @@ namespace WordWars.Network
             Action<ClaimRewardResponse> onSuccess,
             Action<string> onError)
         {
-            string url = $"{BASE_URL}/battlepass/claim";
+            string url = $"{BaseUrl}/battlepass/claim";
 
             var requestBody = new
             {
