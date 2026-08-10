@@ -12,8 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b7b4babb65628447484b2bc6cd81bd13, type: 3}
   m_Name: AppConfig
   m_EditorClassIdentifier: Models::WordWars.Models.AppConfig
-  currentEnvironment: 0
+  currentEnvironment: 1
   localApiUrl: http://127.0.0.1:8000
   localWsUrl: ws://127.0.0.1:8007
-  productionApiUrl: https://your-cloud-run-gateway-url.run.app
-  productionWsUrl: wss://your-cloud-run-multiplayer-url.run.app
+  productionApiUrl: https://wordwars-gateway-734983454951.asia-south1.run.app
+  productionWsUrl: wss://wordwars-multiplayer-734983454951.asia-south1.run.app
