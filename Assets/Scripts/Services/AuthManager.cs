@@ -4,6 +4,7 @@ using Firebase;
 using Firebase.Auth;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using Firebase.Crashlytics; 
 
 public class AuthManager : MonoBehaviour
 {
@@ -59,7 +60,10 @@ public class AuthManager : MonoBehaviour
             if (task.Result == DependencyStatus.Available)
             {
                 auth = FirebaseAuth.DefaultInstance;
-                Debug.Log("✅ Firebase initialized successfully");
+                Crashlytics.ReportUncaughtExceptionsAsFatal = true;
+                
+                Debug.Log("✅ Firebase & Crashlytics initialized successfully");
+            
             }
             else
             {
