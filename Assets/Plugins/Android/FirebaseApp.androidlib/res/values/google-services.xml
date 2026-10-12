@@ -5,6 +5,6 @@
   <string name="project_id" translatable="false">aiwordwars</string>
   <string name="google_api_key" translatable="false">AIzaSyDjCejf0hBBO9Ylxepz_K9IYD8vZJrA_gU</string>
   <string name="google_crash_reporting_api_key" translatable="false">AIzaSyDjCejf0hBBO9Ylxepz_K9IYD8vZJrA_gU</string>
-  <string name="google_app_id" translatable="false">1:846372952109:android:e9f3eff305f957f55400a4</string>
+  <string name="google_app_id" translatable="false">1:846372952109:android:033946ff590ceeb05400a4</string>
   <string name="default_web_client_id" translatable="false">846372952109-5b8eabfpao0c46plpgq59r6q6i7h002l.apps.googleusercontent.com</string>
 </resources>

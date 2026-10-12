@@ -1,17 +1,5 @@
 [
 	{
-		"startedAt": "2026-08-05T13:15:34.790Z",
-		"durationMs": 0,
-		"triggeredBy": "post-commit",
-		"outcome": "CREDENTIAL_MISSING",
-		"batches": 0,
-		"ingested": 0,
-		"touchedSlugs": 0,
-		"routeCalls": 0,
-		"reconcileCalls": 0,
-		"topicFailures": []
-	},
-	{
 		"startedAt": "2026-08-05T16:37:12.834Z",
 		"durationMs": 0,
 		"triggeredBy": "post-commit",
@@ -229,6 +217,18 @@
 	},
 	{
 		"startedAt": "2026-08-11T05:35:41.740Z",
+		"durationMs": 0,
+		"triggeredBy": "post-commit",
+		"outcome": "CREDENTIAL_MISSING",
+		"batches": 0,
+		"ingested": 0,
+		"touchedSlugs": 0,
+		"routeCalls": 0,
+		"reconcileCalls": 0,
+		"topicFailures": []
+	},
+	{
+		"startedAt": "2026-08-11T05:43:56.833Z",
 		"durationMs": 0,
 		"triggeredBy": "post-commit",
 		"outcome": "CREDENTIAL_MISSING",
