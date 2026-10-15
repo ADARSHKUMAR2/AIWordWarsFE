@@ -1,3 +1,11 @@
 {
-	"manuallyDisabled": false
+	"manuallyDisabled": false,
+	"cutoverAttemptedAtMs": 1791803356459,
+	"cutoverFence": {
+		"reason": "cutover to sqlite",
+		"at": "2026-10-12T11:09:16.471Z",
+		"tips": {
+			"/Users/adarsh/AIWordWarsFE": "9d16bc892e5c4650993944fabbdfdde4a0d4986f"
+		}
+	}
 }

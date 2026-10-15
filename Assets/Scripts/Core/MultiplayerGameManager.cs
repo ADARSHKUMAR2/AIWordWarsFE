@@ -1,4 +1,5 @@
 using System.Threading.Tasks;
+using System.Threading;
 using UnityEngine;
 using TMPro;
 using UnityEngine.UI;
@@ -50,9 +51,14 @@ public class MultiplayerGameManager : MonoBehaviour
 
     // ── Internal state ───────────────────────────────────────────────────────
     private float _puzzleStartTime;
+    private bool _acceptingAnswers;
+    private WsNextQuestion _pendingQuestion;
+    private SynchronizationContext _unityContext;
+    private string _currentUserId;
 
     private void Start()
     {
+        _unityContext = SynchronizationContext.Current;
         bool isMultiplayer = PlayerPrefs.GetInt("mp_is_multiplayer", 0) == 1;
 
         if (!isMultiplayer)
@@ -99,6 +105,7 @@ public class MultiplayerGameManager : MonoBehaviour
         // Connect WebSocket
         string wsUrl   = PlayerPrefs.GetString("mp_ws_url");
         string userId  = AuthManager.Instance?.CurrentUserUID;
+        _currentUserId = userId;
         
         Debug.Log($"[MP_GameManager] WS URL: {wsUrl}, UserID: {userId}");
         
@@ -114,6 +121,8 @@ public class MultiplayerGameManager : MonoBehaviour
         // Subscribe to events BEFORE connecting
         MultiplayerWebSocketService.Instance.OnWaiting              += SetStatus;
         MultiplayerWebSocketService.Instance.OnGameStart            += OnGameStart;
+        MultiplayerWebSocketService.Instance.OnNextQuestion         += OnNextQuestion;
+        MultiplayerWebSocketService.Instance.OnQuestionResult       += OnQuestionResult;
         MultiplayerWebSocketService.Instance.OnAnswerResult         += OnAnswerResult;
         MultiplayerWebSocketService.Instance.OnGameOver             += OnGameOver;
         MultiplayerWebSocketService.Instance.OnOpponentDisconnected += OnOpponentDisconnected;
@@ -128,17 +137,67 @@ public class MultiplayerGameManager : MonoBehaviour
     private void OnGameStart(WsGameStart data)
     {
         Debug.Log($"[MP_GameManager] OnGameStart event fired! Scrambled: {data.scrambled}");
-        
+        ShowQuestion(data);
+    }
+
+    private void OnNextQuestion(WsNextQuestion data)
+    {
+        _pendingQuestion = data;
+        _ = ShowNextQuestionAfterResult();
+    }
+
+    private async Task ShowNextQuestionAfterResult()
+    {
+        await Task.Delay(1200);
+        if (this == null || !isActiveAndEnabled || _pendingQuestion == null) return;
+        WsNextQuestion question = _pendingQuestion;
+        _pendingQuestion = null;
+        _unityContext?.Post(_ =>
+        {
+            if (this != null && isActiveAndEnabled && question != null)
+                ShowQuestion(question);
+        }, null);
+    }
+
+    private void ShowQuestion(WsGameStart data)
+    {
         scrambledWordText.text = data.scrambled.ToUpper();
         hintText.text = !string.IsNullOrEmpty(data.hint) ? "Hint: " + data.hint : "";
         feedbackText.text = "🆚 Solve it before your opponent!";
-        SetStatus($"⏱ You have {data.time_limit}s. GO!");
+        string progress = $"Question {data.question_number}/{data.total_questions}  |  {FormatScores(data.score_entries)}";
+        SetStatus($"{progress}  |  {data.time_limit}");
 
         _puzzleStartTime = Time.time;
+        _acceptingAnswers = true;
         submitButton.interactable = true;
+        answerInputField.interactable = true;
         answerInputField.text = "";
         answerInputField.Select();
         answerInputField.ActivateInputField();
+    }
+
+    private void OnQuestionResult(WsQuestionResult data)
+    {
+        _acceptingAnswers = false;
+        submitButton.interactable = false;
+        string winner = string.IsNullOrEmpty(data.winner_id)
+            ? "No points this question."
+            : data.winner_id == _currentUserId ? "You won this question!" : "Opponent won this question.";
+        feedbackText.text = $"{winner} Answer: <b>{data.correct_word}</b>";
+        SetStatus($"Question {data.question_number}/10  |  {FormatScores(data.score_entries)}");
+    }
+
+    private string FormatScores(WsPlayerScore[] scores)
+    {
+        if (scores == null || scores.Length == 0) return "Score 0 - 0";
+        int mine = 0;
+        int opponent = 0;
+        foreach (WsPlayerScore score in scores)
+        {
+            if (score.user_id == _currentUserId) mine = score.score;
+            else opponent = score.score;
+        }
+        return $"You {mine} - {opponent} Opponent";
     }
 
     private void OnAnswerResult(WsAnswerResult data)
@@ -151,7 +210,7 @@ public class MultiplayerGameManager : MonoBehaviour
             answerInputField.Select();
             answerInputField.ActivateInputField();
         }
-        // If correct, server will immediately broadcast game_over — no need to handle here
+        // The server broadcasts question_result after a correct answer.
     }
 
     private void OnGameOver(WsGameOver data)
@@ -160,12 +219,13 @@ public class MultiplayerGameManager : MonoBehaviour
         answerInputField.interactable = false;
 
         string resultMsg;
+        string scoreSummary = FormatScores(data.score_entries);
         if (data.your_result == "win")
-            resultMsg = $"<color=green><size=120%><b>🏆 YOU WIN!</b></size></color>\nSolved in <b>{data.winning_time:F1}s</b>";
+            resultMsg = $"<color=green><size=120%><b>🏆 YOU WIN THE MATCH!</b></size></color>\n{scoreSummary}";
         else if (data.your_result == "lose")
-            resultMsg = $"<color=red><size=120%><b>😞 YOU LOSE</b></size></color>\nOpponent was faster!\nCorrect word: <b>{data.correct_word}</b>";
+            resultMsg = $"<color=red><size=120%><b>😞 YOU LOSE THE MATCH</b></size></color>\n{scoreSummary}";
         else
-            resultMsg = $"<color=yellow><size=120%><b><sprite name=\"hourglass\"> DRAW</b></size></color>\nNobody solved in time!\nCorrect word: <b>{data.correct_word}</b>";
+            resultMsg = $"<color=yellow><size=120%><b><sprite name=\"hourglass\"> MATCH DRAW</b></size></color>\n{scoreSummary}";
 
         ShowResult(resultMsg);
         _ = MultiplayerWebSocketService.Instance.Disconnect();
@@ -182,6 +242,7 @@ public class MultiplayerGameManager : MonoBehaviour
 
     private void OnSubmitClicked()
     {
+        if (!_acceptingAnswers) return;
         string answer = answerInputField.text.Trim();
         if (string.IsNullOrWhiteSpace(answer)) return;
 
@@ -229,6 +290,8 @@ public class MultiplayerGameManager : MonoBehaviour
         {
             MultiplayerWebSocketService.Instance.OnWaiting              -= SetStatus;
             MultiplayerWebSocketService.Instance.OnGameStart            -= OnGameStart;
+            MultiplayerWebSocketService.Instance.OnNextQuestion         -= OnNextQuestion;
+            MultiplayerWebSocketService.Instance.OnQuestionResult       -= OnQuestionResult;
             MultiplayerWebSocketService.Instance.OnAnswerResult         -= OnAnswerResult;
             MultiplayerWebSocketService.Instance.OnGameOver             -= OnGameOver;
             MultiplayerWebSocketService.Instance.OnOpponentDisconnected -= OnOpponentDisconnected;

@@ -63,7 +63,7 @@ public class RoomStatusResponse
 [Serializable]
 public class WsMessage
 {
-    public string type;     // "waiting" | "game_start" | "answer_result" | "game_over" | "opponent_disconnected" | "error" | "pong"
+    public string type;     // waiting | game_start | next_question | question_result | answer_result | game_over | ...
     public string message;  // human-readable string (used by "waiting", "error", "opponent_disconnected")
 }
 
@@ -76,7 +76,30 @@ public class WsGameStart
     public int difficulty;
     public string hint;
     public int time_limit;      // seconds
+    public int question_number;
+    public int total_questions;
+    public WsPlayerScore[] score_entries;
     public string[] players;    // array of user_ids
+}
+
+[Serializable]
+public class WsNextQuestion : WsGameStart { }
+
+[Serializable]
+public class WsPlayerScore
+{
+    public string user_id;
+    public int score;
+}
+
+[Serializable]
+public class WsQuestionResult
+{
+    public string type;
+    public int question_number;
+    public string winner_id;    // Empty/null when the question timed out
+    public string correct_word;
+    public WsPlayerScore[] score_entries;
 }
 
 [Serializable]
@@ -93,7 +116,14 @@ public class WsGameOver
     public string type;         // "game_over"
     public string winner_id;
     public string loser_id;
-    public string correct_word;
-    public float winning_time;
     public string your_result;  // "win" | "lose" | "draw"
+    public WsPlayerScore[] score_entries;
+    public WsQuestionHistory[] question_results;
+}
+
+[Serializable]
+public class WsQuestionHistory
+{
+    public int question_number;
+    public string winner_id;
 }

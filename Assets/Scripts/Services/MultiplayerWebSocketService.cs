@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
+using System.Globalization;
 using NativeWebSocket;
 using UnityEngine;
 
@@ -20,6 +21,8 @@ public class MultiplayerWebSocketService : MonoBehaviour
     // ── Events (fired on Unity's main thread via NativeWebSocket's dispatcher) ──
     public event Action<string> OnWaiting;
     public event Action<WsGameStart> OnGameStart;
+    public event Action<WsNextQuestion> OnNextQuestion;
+    public event Action<WsQuestionResult> OnQuestionResult;
     public event Action<WsAnswerResult> OnAnswerResult;
     public event Action<WsGameOver> OnGameOver;
     public event Action OnOpponentDisconnected;
@@ -118,7 +121,13 @@ public class MultiplayerWebSocketService : MonoBehaviour
             return;
         }
 
-        string msg = $"{{\"type\":\"submit_answer\",\"answer\":\"{answer}\",\"time_taken\":{timeTaken}}}";
+        string escapedAnswer = answer
+            .Replace("\\", "\\\\")
+            .Replace("\"", "\\\"")
+            .Replace("\n", "\\n")
+            .Replace("\r", "\\r")
+            .Replace("\t", "\\t");
+        string msg = $"{{\"type\":\"submit_answer\",\"answer\":\"{escapedAnswer}\",\"time_taken\":{timeTaken.ToString(CultureInfo.InvariantCulture)}}}";
         Debug.Log($"[WS] Sending answer: {msg}");
         await _ws.SendText(msg);
     }
@@ -158,6 +167,16 @@ public class MultiplayerWebSocketService : MonoBehaviour
             case "game_start":
                 var gameStart = JsonUtility.FromJson<WsGameStart>(json);
                 OnGameStart?.Invoke(gameStart);
+                break;
+
+            case "next_question":
+                var nextQuestion = JsonUtility.FromJson<WsNextQuestion>(json);
+                OnNextQuestion?.Invoke(nextQuestion);
+                break;
+
+            case "question_result":
+                var questionResult = JsonUtility.FromJson<WsQuestionResult>(json);
+                OnQuestionResult?.Invoke(questionResult);
                 break;
 
             case "answer_result":
