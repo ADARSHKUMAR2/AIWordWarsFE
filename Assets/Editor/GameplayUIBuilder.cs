@@ -149,6 +149,16 @@ public class GameplayUIBuilder : EditorWindow
         mpStatus.GetComponent<RectTransform>().sizeDelta = new Vector2(0, 80);
         mpStatus.fontStyle = FontStyles.Bold;
 
+        TextMeshProUGUI mpCountdown = AddText(CreateUIObject("MpCountdownText", multiplayerPanel.transform), "Time left: 02:00", 64, Color.black, TextAlignmentOptions.Center);
+        RectTransform mpCountdownRect = mpCountdown.GetComponent<RectTransform>();
+        mpCountdownRect.anchorMin = new Vector2(0, 0);
+        mpCountdownRect.anchorMax = new Vector2(1, 0);
+        mpCountdownRect.pivot = new Vector2(0.5f, 0);
+        mpCountdownRect.anchoredPosition = new Vector2(0, 8);
+        mpCountdownRect.sizeDelta = new Vector2(0, 70);
+        mpCountdown.fontStyle = FontStyles.Bold;
+        mpCountdown.gameObject.SetActive(false);
+
         // --- Common Panel (Main Game Area) ---
         GameObject commonPanel = CreateUIObject("CommonPanel", safeArea.transform);
         RectTransform commonRt = commonPanel.GetComponent<RectTransform>();
@@ -287,6 +297,7 @@ public class GameplayUIBuilder : EditorWindow
         }
 
         mpManager.scrambledWordText = scramText;
+        mpManager.categoryText = catText;
         mpManager.hintText = hintText;
         mpManager.feedbackText = feedbackText;
         mpManager.answerInputField = answerInput;
@@ -299,6 +310,7 @@ public class GameplayUIBuilder : EditorWindow
         mpManager.gameOverPanel = goPanel;
 
         mpManager.mpStatusText = mpStatus;
+        mpManager.mpCountdownText = mpCountdown;
         mpManager.mpResultPanel = mpResultPanel;
         mpManager.mpResultText = mpResultText;
         mpManager.mpPlayAgainButton = mpPlayAgainBtn;

@@ -36,6 +36,7 @@ public class MultiplayerGameManager : MonoBehaviour
     public TMP_InputField answerInputField;
     public Button submitButton;
     public Button quitButton;
+    public TextMeshProUGUI categoryText;
 
     [Header("Single-player panels to hide during multiplayer")]
     public GameObject classicPanel;
@@ -44,6 +45,7 @@ public class MultiplayerGameManager : MonoBehaviour
     public GameObject gameOverPanel;
 
     [Header("Multiplayer-specific UI")]
+    public TextMeshProUGUI mpCountdownText;
     public TextMeshProUGUI mpStatusText;    // e.g. "Waiting for opponent..." / "Game ON!"
     public GameObject mpResultPanel;        // Shown at game end
     public TextMeshProUGUI mpResultText;    // Shows WIN / LOSE / DRAW message
@@ -51,6 +53,8 @@ public class MultiplayerGameManager : MonoBehaviour
 
     // ── Internal state ───────────────────────────────────────────────────────
     private float _puzzleStartTime;
+    private float _remainingQuestionTime;
+    private bool _countdownActive;
     private bool _acceptingAnswers;
     private WsNextQuestion _pendingQuestion;
     private SynchronizationContext _unityContext;
@@ -68,6 +72,7 @@ public class MultiplayerGameManager : MonoBehaviour
             
             // Also hide the status text (and its parent if you placed it in a panel)
             if (mpStatusText != null) mpStatusText.gameObject.SetActive(false);
+            if (mpCountdownText != null) mpCountdownText.gameObject.SetActive(false);
             
             // disable this manager and let GameManager/DailyChallengeManager run
             gameObject.SetActive(false);
@@ -159,14 +164,42 @@ public class MultiplayerGameManager : MonoBehaviour
         }, null);
     }
 
+    private void Update()
+    {
+        if (!_countdownActive || mpCountdownText == null) return;
+        _remainingQuestionTime = Mathf.Max(0f, _remainingQuestionTime - Time.deltaTime);
+        int seconds = Mathf.CeilToInt(_remainingQuestionTime);
+        mpCountdownText.text = $"Time left: {seconds / 60:00}:{seconds % 60:00}";
+        mpCountdownText.color = _remainingQuestionTime <= 10f ? Color.red : Color.black;
+        if (_remainingQuestionTime <= 0f)
+        {
+            _countdownActive = false;
+            _acceptingAnswers = false;
+            submitButton.interactable = false;
+        }
+    }
+
     private void ShowQuestion(WsGameStart data)
     {
+        if (categoryText != null)
+            categoryText.text = string.IsNullOrWhiteSpace(data.category)
+                ? "Category:"
+                : $"Category: {data.category.ToUpperInvariant()}";
         scrambledWordText.text = data.scrambled.ToUpper();
         hintText.text = !string.IsNullOrEmpty(data.hint) ? "Hint: " + data.hint : "";
         feedbackText.text = "🆚 Solve it before your opponent!";
         string progress = $"Question {data.question_number}/{data.total_questions}  |  {FormatScores(data.score_entries)}";
-        SetStatus($"{progress}  |  {data.time_limit}");
+        SetStatus(progress);
 
+        _remainingQuestionTime = Mathf.Max(0f, data.time_limit);
+        _countdownActive = _remainingQuestionTime > 0f;
+        if (mpCountdownText != null)
+        {
+            mpCountdownText.gameObject.SetActive(true);
+            mpCountdownText.color = Color.black;
+            int seconds = Mathf.CeilToInt(_remainingQuestionTime);
+            mpCountdownText.text = string.Format("Time left: {0:00}:{1:00}", seconds / 60, seconds % 60);
+        }
         _puzzleStartTime = Time.time;
         _acceptingAnswers = true;
         submitButton.interactable = true;
@@ -179,6 +212,7 @@ public class MultiplayerGameManager : MonoBehaviour
     private void OnQuestionResult(WsQuestionResult data)
     {
         _acceptingAnswers = false;
+        _countdownActive = false;
         submitButton.interactable = false;
         string winner = string.IsNullOrEmpty(data.winner_id)
             ? "No points this question."
@@ -204,7 +238,7 @@ public class MultiplayerGameManager : MonoBehaviour
     {
         if (!data.correct)
         {
-            feedbackText.text = "<color=red><sprite name=\"CrissCross\"> Incorrect! Try again.</color>";
+            feedbackText.text = $"<color=red><sprite name=\"CrissCross\"> Incorrect! Try again.</color>";
             submitButton.interactable = true;
             answerInputField.text = "";
             answerInputField.Select();
@@ -217,6 +251,9 @@ public class MultiplayerGameManager : MonoBehaviour
     {
         submitButton.interactable = false;
         answerInputField.interactable = false;
+        _acceptingAnswers = false;
+        _countdownActive = false;
+        if (mpCountdownText != null) mpCountdownText.gameObject.SetActive(false);
 
         string resultMsg;
         string scoreSummary = FormatScores(data.score_entries);
@@ -234,6 +271,9 @@ public class MultiplayerGameManager : MonoBehaviour
     private void OnOpponentDisconnected()
     {
         submitButton.interactable = false;
+        _acceptingAnswers = false;
+        _countdownActive = false;
+        if (mpCountdownText != null) mpCountdownText.gameObject.SetActive(false);
         ShowResult("<color=green><size=120%><b>🏆 YOU WIN!</b></size></color>\nOpponent disconnected.");
         _ = MultiplayerWebSocketService.Instance.Disconnect();
     }

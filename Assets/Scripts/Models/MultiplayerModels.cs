@@ -75,6 +75,7 @@ public class WsGameStart
     public string scrambled;    // e.g. "P Z L E U Z"
     public int difficulty;
     public string hint;
+    public string category;
     public int time_limit;      // seconds
     public int question_number;
     public int total_questions;
